@@ -1,13 +1,27 @@
 # TODO 
 ___
 # 1) Środowisko/ World do RL 
-- Usunąć zbędnę pliki z projektu z SiAPWa, zrobić porządek 
-- Stworzyć nowe Nody sterujące:
-  `ControlNode` - Node wysyłający odpowiednie sterowanie do pojazdu
-  `GetStatusNode` - Node zbierający dane z pojazdu: **obraz**, **prędkość**, **idk co jeszcze**
+- Usunąć zbędnę pliki z projektu z SiAPWa, zrobić porządek
+- Sprawdzić czy świat, mapa i wszystko jest dobrze skonfigurowane (narazie bez przeszkód)
+- Konfiguracja czujników: 1x kamera + Lidar
 
 # 2) Agent 
+- Pojazd jako line follower, nauka w kilku fazach: <br>
+  1 -> line follower, jazda za żółtą linią
+  2 -> line follower, jazda po odpowiendim pasie
+  3 -> line follower + unikanie przeszków
+  
+- Zaprojektować strategię karania i nagradzania, (narazie dla fazy pierwszej)
+- Zaimplementować algorytm PPO 
+- Zaimplementować architekturę sieci podjemującej decyzje **Kamera** + **Lidar** + **Prędkość**/**Prędkości kół** <br>
+  **CNN (kamera) + MLP (lidar) -> Head (MLP)** <br> 
 
+
+
+# 3) Wrapper
+- Zaimplementować klasę wrappera, która jest zgodna ze standardem (niektórzy sugerują żeby zrobić klasę dziedziczącą np po wraperze od Gymnasium `gym.Env`)
+- Wrapper ma być jednocześnie **Nodem** w Rosie. Ma pobierać stan auta, tj. **obraz**, **lidar**, **prędkość** (te dane będzie dostawać sieć do podejmowania decyzji), **pozycję** (do wykorzystania w karze/nagrodzie). <br> Ma wysyłać sygnał sterujący do symulacji (w przyszłości transformacja danych do symulacji na dane do rzeczywistego pojazdu tj. prędkość x + prędkość kątowa względm z -> prędkość x + skręt kół)
+- Zadbać o synchronizację tj. żeby wrapper brał odpowiednie, aktualne klatki do obliczeń
 
 
 ___
