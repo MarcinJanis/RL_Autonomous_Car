@@ -1,10 +1,10 @@
 #to create bridge
-# ros2 run ros_gz_bridge parameter_bridge /cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist
+    # ros2 run ros_gz_bridge parameter_bridge /cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist
 
-# ros2 run ros_gz_bridge parameter_bridge \
-#   /cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist \
-#   /world/mecanum_drive/model/vehicle_blue/link/left_camera_link/sensor/left_camera_sensor/image@sensor_msgs/msg/Image@gz.msgs.Image \
-#   /world/mecanum_drive/model/vehicle_blue/link/right_camera_link/sensor/right_camera_sensor/image@sensor_msgs/msg/Image@gz.msgs.Image
+    # ros2 run ros_gz_bridge parameter_bridge \
+    #   /cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist \
+    #   /world/mecanum_drive/model/vehicle_blue/link/left_camera_link/sensor/left_camera_sensor/image@sensor_msgs/msg/Image@gz.msgs.Image \
+    #   /world/mecanum_drive/model/vehicle_blue/link/right_camera_link/sensor/right_camera_sensor/image@sensor_msgs/msg/Image@gz.msgs.Image
 
 # pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 # pip3 install segmentation_models_pytorch
@@ -20,10 +20,12 @@ import numpy as np
 import cv2
 from scipy.interpolate import UnivariateSpline
 from scipy.interpolate import splrep, splev
+from scipy.optimize import curve_fit
 
-
-from view_manipualtion import *
-from Segmetation import *
+import subprocess
+import shlex
+from autonomous_vehicles.view_manipulation import *
+from autonomous_vehicles.Segmetation import *
 
 # --- Klasa Regulatora PID ---
 class regulatorPID():
@@ -102,14 +104,8 @@ class ControllerNode(Node):
         self.bridge = CvBridge()
         self.create_subscription(
             Image,
-            "/world/mecanum_drive/model/vehicle_blue/link/left_camera_link/sensor/left_camera_sensor/image",
+            "/world/mecanum_drive/model/vehicle_blue/link/camera_link/sensor/camera_sensor/image",
             self.get_left_img,
-            10
-        )
-        self.create_subscription(
-            Image,
-            "/world/mecanum_drive/model/vehicle_blue/link/right_camera_link/sensor/right_camera_sensor/image",
-            self.get_right_img,
             10
         )
 
@@ -145,16 +141,7 @@ class ControllerNode(Node):
             self.get_logger().error(f"[left camera] CvBridge conversion error: {e}")
             self.left_camera_status = False
             return
-    
-    def get_right_img(self, msg):
-        try:
-            self.right_camera_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            self.right_camera_status = True
-        except Exception as e:
-            self.get_logger().error(f"[right camera] CvBridge conversion error: {e}")
-            self.right_camera_status = False
-            return
-    
+        
     def control_loop(self):
         if self.left_camera_img is None:
             return  
@@ -274,6 +261,13 @@ class ControllerNode(Node):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,255), 2)
         cv2.putText(frame_vis_color, f"Speed: {self.vx:.2f}", (30, 60),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
+        
+        mask = np.argmax(mask_bool, axis=2).astype(np.uint8)
+
+        # Mnożenie maski, żeby różne klasy dawały różne kolory
+        color_mask = cv2.applyColorMap(mask * (255 // mask_bool.shape[2]), cv2.COLORMAP_JET)
+
+        cv2.imshow("Segmentation Mask", color_mask)
 
         cv2.imshow("Bird eye", frame_vis_color)
         cv2.imshow("Right trajectory spline", mask_spline_vis)
@@ -389,6 +383,18 @@ class ControllerNode(Node):
 
 
 def main():
+    # processes = []
+    # commands = ["ros2 run ros_gz_bridge parameter_bridge /cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist",
+    #                 "ros2 run ros_gz_bridge parameter_bridge \
+    #   /cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist \
+    #   /world/mecanum_drive/model/vehicle_blue/link/left_camera_link/sensor/left_camera_sensor/image@sensor_msgs/msg/Image@gz.msgs.Image \
+    #   /world/mecanum_drive/model/vehicle_blue/link/right_camera_link/sensor/right_camera_sensor/image@sensor_msgs/msg/Image@gz.msgs.Image"
+    # ]
+    
+    # for cmd in commands:
+    #     p = subprocess.Popen(shlex.split(cmd)) 
+    #     processes.append(p)
+        
     rclpy.init()
     node = ControllerNode()
     try:
@@ -399,5 +405,5 @@ def main():
         node.destroy_node()
         rclpy.shutdown()
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
