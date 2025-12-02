@@ -513,10 +513,10 @@
   <ray>
     <scan>
       <horizontal> <!-- Ang resolution 0.45 deg = 0,00785 rad--> 
-        <samples>267</samples> <!-- samples = (max_angle - min_angle)/ang_resolution --> 
+        <samples>280</samples> <!-- samples = (max_angle - min_angle)/ang_resolution --> 
         <resolution>1</resolution> <!-- 1 for 2D Lidar --> 
-        <min_angle>-1.046666667</min_angle> <!-- -60 deg -> -1.046666667 rad --> 
-        <max_angle>1.046666667</max_angle> <!-- 60 deg -> 1.046666667 rad --> 
+        <min_angle>-1.099</min_angle> <!-- -63 deg -> -1.099 rad --> 
+        <max_angle>1.099</max_angle> <!-- 63 deg -> 1.099 rad --> 
       </horizontal>
     </scan>
     <range> <!-- 0.2 - 12 [m] -->
