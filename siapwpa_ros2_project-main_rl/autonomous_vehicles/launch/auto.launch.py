@@ -1,0 +1,38 @@
+from launch import LaunchDescription
+from launch.actions import ExecuteProcess
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+    world_path = "/home/developer/ros2_ws/src/models/walls/mecanum.sdf"
+    gz_bridge_path = "/home/developer/ros2_ws/src/autonomous_vehicles/config/bridge_config.yaml"
+    
+
+    gz_sim_world = ExecuteProcess(
+        cmd=["gz", "sim", world_path, "-r"],
+        output="screen"
+    )
+
+    gz_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=['/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
+                   '/world/mecanum_drive/model/vehicle_blue/link/camera_link/sensor/camera_sensor/image@sensor_msgs/msg/Image@gz.msgs.Image',
+                   '/world/mecanum_drive/model/vehicle_blue/link/lidar_link/sensor/lidar/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan'],
+        output='screen'
+    )
+
+
+    test_env = Node(
+        package='autonomous_vehicles',  
+        executable='test_env',
+        name='test_env',
+        output="screen"
+    )
+
+
+    return LaunchDescription([
+        gz_sim_world,
+        gz_bridge,
+        test_env
+    ])
