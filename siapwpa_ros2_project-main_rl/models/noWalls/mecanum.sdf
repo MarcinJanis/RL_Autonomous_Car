@@ -22,7 +22,7 @@
 <pose>0 0 2 0 0 0</pose>
 <geometry>
 <mesh>
-<uri>meshes/Trapezoid_collision.dae</uri>
+<uri>meshes/Trapezoid_collision_scale.dae</uri>
 </mesh>
 </geometry>
 </collision>
@@ -90,7 +90,8 @@
     </model>
     <model name='vehicle_blue' xmlns:gz='http://gazebosim.org/schema'>
       <!-- <pose>0 2 0.325 0 0 0</pose> -->
-      <pose>-6.65 14.61 0.33 0 0 -1.55</pose>
+      <!-- <pose>-6.65 14.61 0.33 0 0 -1.55</pose> -->
+       <pose>2.72 16.2 0.33 0 0 -1.55</pose>
       <link name='chassis'>
         <pose>-0.15142700000000001 0 0.17499999999999999 0 0 0</pose>
 
