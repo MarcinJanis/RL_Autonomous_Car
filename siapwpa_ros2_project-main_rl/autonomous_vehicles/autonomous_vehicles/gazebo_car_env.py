@@ -56,9 +56,9 @@ class GazeboCarEnv(gym.Env):
             dtype=np.float32
         )
 
-        # obserwacja = obraz 84x84x3 (uint8)
-        self.obs_h = 84
-        self.obs_w = 84
+        # obserwacja = obraz 256x256x3 (uint8)
+        self.obs_h = 256
+        self.obs_w = 256
         self.observation_space = spaces.Box(
             low=0,
             high=255,
