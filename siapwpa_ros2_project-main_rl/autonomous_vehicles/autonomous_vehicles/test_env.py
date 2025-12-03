@@ -11,7 +11,7 @@ GazeboCarEnv = gmod.GazeboCarEnv
 def main():
     env = GazeboCarEnv()
     obs = env.reset()
-    print("Initial obs shape:", obs.shape)
+    # print("Initial obs shape:", obs.shape)
 
     for i in range(50):
         action = env.action_space.sample()
