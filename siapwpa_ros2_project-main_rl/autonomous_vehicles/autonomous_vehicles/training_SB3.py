@@ -71,7 +71,7 @@ vec_env = make_vec_env(env_id, n_envs=ENV_PARALLEL)
 # -> More stable training (when model learns based on one simulation, step t and t+1 are really similar. When more simulation are used during one learning step, data are more diverse, this leads to better problem generalisation).
 
 # Additional env for evauation and callbacks
-eval_env = make_vec_env(lambda: TwojeSrodowisko(), n_envs=1)
+eval_env = make_vec_env(lambda: GazeboCarEnv(), n_envs=1)
 os.makedirs(os.path.dirname('./models'), exist_ok=True)
 os.makedirs(os.path.dirname('./logs'), exist_ok=True)
 eval_callback = EvalCallback(
@@ -104,5 +104,8 @@ print(model.policy)
 print("----------------------------------")
 
 # Trening
-model.learn(total_timesteps=TOTAL_TRAINING_STEPS, callback=[wandb_callback])
+model.learn(total_timesteps=TOTAL_TRAINING_STEPS, callback=[wandb_callback, eval_callback])
 model.save("RL_Autonomous_Car_finalmodel_1.zip")
+
+# TODO: 
+# W środowisku w step w info zwracać wartość poszczególnych składowych nagrody i napisać klasę call back która będzie zapisywać dane w wykresie wandb
