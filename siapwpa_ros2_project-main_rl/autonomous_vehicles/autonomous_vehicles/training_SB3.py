@@ -88,6 +88,11 @@ eval_callback = EvalCallback(
 model = PPO(
     "MultiInputPolicy",  # Define input type, "MultiInputPolicy" for many inputs with different shape
     vec_env, 
+    n_steps=1024,          # n_steps training samples kept in buffer
+    batch_size=128,        # 
+    n_epochs=15,           #
+    learning_rate=0.0001,  # 
+    gamma=0.995,           # discount factor - how algorythm takes into account future rewards (close to 1 -> future rewards important, close to 0 -> only current reward has importance, greedy)
     policy_kwargs=policy_kwargs, 
     verbose=2,
     device=DEVICE 
