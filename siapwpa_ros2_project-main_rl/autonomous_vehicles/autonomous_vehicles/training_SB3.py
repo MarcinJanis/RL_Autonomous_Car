@@ -104,6 +104,9 @@ print(model.policy)
 print("----------------------------------")
 
 # Trening
+print('-'*10)
+print('Starting training')
+print('-'*10)
 model.learn(total_timesteps=TOTAL_TRAINING_STEPS, callback=[wandb_callback, eval_callback])
 model.save("RL_Autonomous_Car_finalmodel_1.zip")
 
