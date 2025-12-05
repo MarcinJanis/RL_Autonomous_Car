@@ -109,3 +109,4 @@ model.save("RL_Autonomous_Car_finalmodel_1.zip")
 
 # TODO: 
 # W środowisku w step w info zwracać wartość poszczególnych składowych nagrody i napisać klasę call back która będzie zapisywać dane w wykresie wandb
+# render=True # Sprawdzić czy to napewno funkcja close() ma służyć do zamknięcia tego co otwarło render.. czy nie poiwnno to być w ramach render poprostu. 
