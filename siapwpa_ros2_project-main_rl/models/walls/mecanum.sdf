@@ -9,6 +9,12 @@
     <plugin name='gz::sim::systems::Physics' filename='gz-sim-physics-system'/>
     <plugin name='gz::sim::systems::UserCommands' filename='gz-sim-user-commands-system'/>
     <plugin name='gz::sim::systems::SceneBroadcaster' filename='gz-sim-scene-broadcaster-system'/>
+    <plugin name='gz::sim::systems::Contact' filename='gz-sim-contact-system'/>
+    
+    
+
+
+
     <gravity>0 0 -9.8</gravity>
     <magnetic_field>5.5644999999999998e-06 2.2875799999999999e-05 -4.2388400000000002e-05</magnetic_field>
     <atmosphere type='adiabatic'/>
@@ -199,10 +205,14 @@
           <cast_shadows>true</cast_shadows>
           <intensity>1.0</intensity>
         </light>
-        <collision name="collision">
+        
+        <collision name="road_collision">
           <geometry>
             <mesh>
               <uri>meshes/model.dae</uri>
+              <submesh>
+                <name>road</name>
+              </submesh>
             </mesh>
           </geometry>
           <surface>
@@ -211,10 +221,52 @@
             </contact>
           </surface>
         </collision>
+
+        <collision name="outer_walls_collision">
+          <geometry>
+            <mesh>
+              <uri>meshes/model.dae</uri>
+              <submesh>
+                <name>outer_walls</name>
+              </submesh>
+            </mesh>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>0x02</collide_bitmask>
+            </contact>
+          </surface>
+        </collision>
+
+        <collision name="inner_walls_collision">
+          <geometry>
+            <mesh>
+              <uri>meshes/model.dae</uri>
+              <submesh>
+                <name>inner_walls</name>
+              </submesh>
+            </mesh>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>0x04</collide_bitmask>
+            </contact>
+          </surface>
+        </collision>
+    
+        <sensor name='walls_contact_sensor' type='contact'>
+          <always_on>true</always_on>
+          <update_rate>50.0</update_rate>
+          <contact>
+            <collision>outer_walls_collision</collision> 
+            <collision>inner_walls_collision</collision> 
+          </contact>
+        </sensor>
+    
       </link>
       <pose>0 0 0 0 0 0</pose>
     </model>
-    
+
     <model name='ground_plane'>
       <static>true</static>
       <link name='link'>
@@ -268,7 +320,6 @@
     </model>
 
     <model name='vehicle_blue' xmlns:gz='http://gazebosim.org/schema'>
-      <!-- <pose>0 2 0.325 0 0 0</pose> -->
       <pose>-6.65 14.61 0.33 0 0 -1.55</pose>
       <link name='chassis'>
         <pose>-0.151427 0 0.175 0 0 0</pose>
@@ -310,8 +361,11 @@
             <contact/>
           </surface>
         </collision>
+
         <enable_wind>false</enable_wind>
       </link>
+
+
       <link name='front_left_wheel'>
         <pose>0.554283 0.625029 -0.025 -1.5707 0 0</pose>
         <inertial>
@@ -344,6 +398,7 @@
           <geometry>
             <sphere>
               <radius>0.3</radius>
+              <!-- <radius>0.1</radius> -->
             </sphere>
           </geometry>
           <surface>
@@ -355,9 +410,12 @@
               </ode>
             </friction>
             <bounce/>
-            <contact/>
+            <contact>
+              <collide_bitmask>0x01</collide_bitmask>
+            </contact>
           </surface>
         </collision>
+
         <enable_wind>false</enable_wind>
       </link>
       <link name='rear_left_wheel'>
@@ -392,6 +450,7 @@
           <geometry>
             <sphere>
               <radius>0.3</radius>
+              <!-- <radius>0.1</radius> -->
             </sphere>
           </geometry>
           <surface>
@@ -403,11 +462,13 @@
               </ode>
             </friction>
             <bounce/>
-            <contact/>
+            <contact>
+              <collide_bitmask>0x01</collide_bitmask>
+            </contact>
           </surface>
         </collision>
         <enable_wind>false</enable_wind>
-      </link>
+        </link>
       <link name='front_right_wheel'>
         <pose>0.554282 -0.625029 -0.025 -1.5707 0 0</pose>
         <inertial>
@@ -440,6 +501,7 @@
           <geometry>
             <sphere>
               <radius>0.3</radius>
+              <!-- <radius>0.1</radius> -->
             </sphere>
           </geometry>
           <surface>
@@ -451,11 +513,16 @@
               </ode>
             </friction>
             <bounce/>
-            <contact/>
+            <contact>
+              <collide_bitmask>0x01</collide_bitmask>
+            </contact>
           </surface>
         </collision>
+
         <enable_wind>false</enable_wind>
       </link>
+
+
       <link name='rear_right_wheel'>
         <pose>-0.957138 -0.625029 -0.025 -1.5707 0 0</pose>
         <inertial>
@@ -488,6 +555,7 @@
           <geometry>
             <sphere>
               <radius>0.3</radius>
+              <!-- <radius>0.1</radius> -->
             </sphere>
           </geometry>
           <surface>
@@ -499,9 +567,12 @@
               </ode>
             </friction>
             <bounce/>
-            <contact/>
+            <contact>
+              <collide_bitmask>0x01</collide_bitmask>
+            </contact>
           </surface>
         </collision>
+
         <enable_wind>false</enable_wind>
       </link>
       
@@ -609,67 +680,9 @@
       <static>false</static>
       <self_collide>false</self_collide>
 
-      <!-- <link name="front_camera_link">
-        <pose>1.1 0 0.6 0 0 0</pose>
-        <inertial>
-          <mass>0.1</mass>
-          <inertia>
-            <ixx>0.001</ixx>
-            <iyy>0.001</iyy>
-            <izz>0.001</izz>
-          </inertia>
-        </inertial>
-        <visual name="camera_visual">
-          <geometry>
-            <box>
-              <size>0.05 0.05 0.05</size>
-            </box>
-          </geometry>
-          <material>
-            <ambient>0 0 0 1</ambient>
-            <diffuse>0 0 0 1</diffuse>
-          </material>
-        </visual>
-        <sensor name="front_camera" type="camera">
-          <pose>0 0 0 0 0 0</pose>
-          <always_on>true</always_on>
-          <update_rate>30</update_rate>
-          <visualize>true</visualize>
-          <camera>
-            <horizontal_fov>1.047</horizontal_fov>
-            <image>
-              <width>640</width>
-              <height>480</height>
-              <format>R8G8B8</format>
-            </image>
-            <clip>
-              <near>0.1</near>
-              <far>100</far>
-            </clip>
-          </camera>
-          <plugin name='gz::sim::systems::Sensors' filename='gz-sim-sensors-system'>
-            <render_engine>ogre2</render_engine>
-          </plugin>
-        </sensor>
-      </link>
 
-      <joint name="front_camera_joint" type="fixed">
-        <parent>chassis</parent>
-        <child>front_camera_link</child>
-        <pose>0 0 0 0 0 0</pose>
-      </joint> -->
-
-
-
-
-
-<!-- ______SENSORS______ --> 
-
-<!-- Camera -->
 <link name="camera_link">
-  <pose>1.1 0 0.6 0 0.087222222 0</pose> <!-- pitch + 5 [deg] = 0.0872 [rad]--> 
-
-  <inertial>
+  <pose>1.1 0 0.6 0 0.087222222 0</pose> <inertial>
     <mass>0.1</mass>
     <inertia>
       <ixx>0.001</ixx>
@@ -696,9 +709,7 @@
     <update_rate>30</update_rate> 
     <visualize>true</visualize>
     <camera>
-      <horizontal_fov>1.203666667</horizontal_fov> <!-- horizontal FOV: 69 +/- 1 deg ->  1,203666667 rad--> 
-      <image>
-        <!-- Orginal resolution: 1920x1080 -> Rescale to 480x270 --> 
+      <horizontal_fov>1.203666667</horizontal_fov> <image>
         <width>480</width>
         <height>270</height>
         <format>R8G8B8</format>
@@ -711,18 +722,14 @@
   </sensor>
 </link>
 
-<!-- Connection camera with car -->
 <joint name="camera_joint" type="fixed">
   <parent>chassis</parent>
   <child>camera_link</child>
   <pose>0 0 0 0 0 0</pose>
 </joint>
 
-<!-- ______ Lidar ______ --> 
 <link name="lidar_link">
-  <pose>1.1 0 0.4 0 0 0</pose> <!-- --> 
-
-  <inertial>
+  <pose>1.1 0 0.4 0 0 0</pose> <inertial>
     <mass>0.1</mass>
     <inertia>
       <ixx>0.001</ixx>
@@ -746,15 +753,9 @@
 <sensor type="ray" name="lidar">
   <ray>
     <scan>
-      <horizontal> <!-- Ang resolution 0.45 deg = 0,00785 rad--> 
-        <samples>280</samples> <!-- samples = (max_angle - min_angle)/ang_resolution --> 
-        <resolution>1</resolution> <!-- 1 for 2D Lidar --> 
-        <min_angle>-1.099</min_angle> <!-- -63 deg -> -1.099 rad --> 
-        <max_angle>1.099</max_angle> <!-- 63 deg -> 1.099 rad --> 
-      </horizontal>
+      <horizontal> <samples>280</samples> <resolution>1</resolution> <min_angle>-1.099</min_angle> <max_angle>1.099</max_angle> </horizontal>
     </scan>
-    <range> <!-- 0.2 - 12 [m] -->
-      <min>0.2</min>
+    <range> <min>0.2</min>
       <max>12.0</max>
       <resolution>0.01</resolution>
     </range>
@@ -763,23 +764,26 @@
 
 </link>
 
-<!-- Connection lidar with car -->
 <joint name="lidar_joint" type="fixed">
   <parent>chassis</parent>
   <child>lidar_link</child>
   <pose>0 0 0 0 0 0</pose>
 </joint>
 
-<!-- Plugin for sensors -->
 <plugin name='gz::sim::systems::Sensors' filename='gz-sim-sensors-system'>
   <render_engine>ogre2</render_engine>
   <start_enabled>true</start_enabled>
 </plugin>
 
+<plugin filename="gz-sim-odometry-publisher-system"
+        name="gz::sim::systems::OdometryPublisher">
+  <odom_frame>world</odom_frame>
+  <robot_base_frame>chassis</robot_base_frame>
+  <dimensions>3</dimensions>                 
+  <odom_publish_frequency>50</odom_publish_frequency> 
+  <topic>/ground_truth/odom</topic>
+</plugin>
 
-
-
-      
     </model>
 
     <light name='sun' type='directional'>
@@ -803,3 +807,4 @@
     </light>
   </world>
 </sdf>
+
