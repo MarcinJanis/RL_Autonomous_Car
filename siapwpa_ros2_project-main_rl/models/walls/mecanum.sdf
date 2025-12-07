@@ -706,12 +706,12 @@
   <sensor name="camera_sensor" type="camera">
     <pose>0 0 0 0 0 0</pose>
     <always_on>true</always_on>
-    <update_rate>30</update_rate> 
+    <update_rate>100</update_rate> 
     <visualize>true</visualize>
     <camera>
       <horizontal_fov>1.203666667</horizontal_fov> <image>
-        <width>480</width>
-        <height>270</height>
+        <width>256</width>
+        <height>256</height>
         <format>R8G8B8</format>
       </image>
       <clip>
@@ -755,7 +755,8 @@
     <scan>
       <horizontal> <samples>280</samples> <resolution>1</resolution> <min_angle>-1.099</min_angle> <max_angle>1.099</max_angle> </horizontal>
     </scan>
-    <range> <min>0.2</min>
+    <range> 
+      <min>0.2</min>
       <max>12.0</max>
       <resolution>0.01</resolution>
     </range>
@@ -780,7 +781,7 @@
   <odom_frame>world</odom_frame>
   <robot_base_frame>chassis</robot_base_frame>
   <dimensions>3</dimensions>                 
-  <odom_publish_frequency>50</odom_publish_frequency> 
+  <odom_publish_frequency>100</odom_publish_frequency> 
   <topic>/ground_truth/odom</topic>
 </plugin>
 

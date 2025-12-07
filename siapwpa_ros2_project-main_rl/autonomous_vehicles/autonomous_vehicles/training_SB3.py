@@ -14,74 +14,121 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
 
+import net_agent.net_v1 as agent
+from gazebo_car_env import GazeboCarEnv as gazebo_env
+
 import wandb
 from wandb.integration.sb3 import WandbCallback
 
 # Parameters
 ENV_PARALLEL = 4 # How many envornment shall work parallel during training
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-TOTAL_TRAINING_STEPS = 100000 # Total steps
-EVAL_STEPS = 5000 # Evaluation after this amount of steps
+TOTAL_STEPS = 1000000 # Total steps
+EVAL_STEPS = 10000 # Evaluation after this amount of steps
+MAX_STEPS_PER_EPISODE = 5000 # Steps per episoed (max)
+
+rewards =  { 'velocity': 1, 'trajectory': -5, 'collision': -15, 'timeout': -5, 'destin': 20 }
+# velocity - reward for velocity to motive car to explore
+# trajectory - punishment for distance from desired trajectory 
+# collision - punishment for collision
+# timeout - punishment for exceed max steps before reached goal
+# destin - reward for reach goal  
+
+trajectory_goal = './siapwpa_ros2_project-main_rl/models/walls/waypoints_il_srodek.csv'
+
+# boundaries for car
+max_linear_velocity = 3.0
+max_angular_velocity = 2.0
 
 # --- WandB intergation ---
+#TODO: dodać hiperparametry o których chcemy zachować informację!! Przykładowe: 
 config = {
-    "policy_type": "MultiInputPolicy",
-    "total_timesteps": TOTAL_TRAINING_STEPS,
-    "env_id": "GazeboCarEnv", # Sprawdzić czy poprawne uzupełnione
-    "net_arch": [128, 64] # Podmieć!!!
+   "policy_type": "MultiInputPolicy",
+    "total_timesteps": TOTAL_STEPS,
+    "max_steps_per_episode": MAX_STEPS_PER_EPISODE,
 }
 
+wandb.login()
+
 run = wandb.init(
-    project=".........",
+    project="RL_Autonomous_Car",
+    entity="deep-neural-network-course",
+    name='RL_TestRun_1', # Name
+    settings=wandb.Settings(save_code=False),
     config=config,
-    sync_tensorboard=True, # Bardzo przydatne
-    monitor_gym=True
+    sync_tensorboard=True,
+    monitor_gym=False,
+    save_code=False
 )
 
 wandb_callback = WandbCallback(
-    model_save_path=f"models/{run.id}", #Save models to wandb
+    model_save_path=None,   
+    save_model=False,      
     verbose=2,
+    gradient_save_freq=0
 )
 
-# --- check compliance with StableBaseline3 ---
-env = GazeboCarEnv()
-check_env(env, warn=True)
-#TODO: delte fragment or destructor to not defince environment two times
+# --- Init Environment ---
+env = gazebo_env.GazeboCarEnv(rewards = rewards, 
+                              trajectory_points_pth = trajectory_goal, 
+                              max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
+                              max_lin_vel = max_linear_velocity,
+                              max_ang_vel = max_angular_velocity)
 
-# --- Init model ---
-#TODO
-# zmienić model żeby był tylko ekstraktorem cech (pozbyć się głowy) 
-# Zamrozić pierwsze warstwy Uneta już na etapie inicjalizacji ( w konstruktorze klasy)
+# check compiliance
+
+print("Checking environment...")
+check_env(env, warn=True)
+del env 
+print("Environment checked.")
+
+
+# --- Init model and policy config---
+
+encoder_check_point_pth = './siapwpa_ros2_project-main/autonomous_vehicles/autonomous_vehicles/net_agent/best_weights.ckpt'
 
 head_arch = dict(
-    pi=[128, 64], # Policy head - action
-    vf=[256] # Value head - reward
+    pi=[512, 64], # Policy head - action
+    vf=[128, 64] # Value head - reward
 )
 
 policy_kwargs = dict(
-    features_extractor_class=MultimodalModel, # featuers extractor model 
-    features_extractor_kwargs=dict(features_dim=1024), # Output features vector dimension
+    features_extractor_class=agent.AgentNet, #(encoder_check_point_pth, action = 2, device = DEVICE), # featuers extractor model 
+    features_extractor_kwargs=dict(          
+        encoder_check_point_pth=encoder_check_point_pth, 
+        action=2, 
+        device=DEVICE,
+        features_dim=1024
+    ),
     net_arch=head_arch # Action head
 )
 
 # Environment vectorization - for parallel training
-env_id = lambda: GazeboCarEnv()
+env_id = lambda: gazebo_env.GazeboCarEnv(rewards = rewards, 
+                              trajectory_points_pth = trajectory_goal, 
+                              max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
+                              max_lin_vel = max_linear_velocity,
+                              max_ang_vel = max_angular_velocity)
+
 vec_env = make_vec_env(env_id, n_envs=ENV_PARALLEL)
 # -> Faster trainging (GPU waits until simulation ennds on CPU, its better to use all of available CPU threads 
 # -> More stable training (when model learns based on one simulation, step t and t+1 are really similar. When more simulation are used during one learning step, data are more diverse, this leads to better problem generalisation).
 
 # Additional env for evauation and callbacks
-eval_env = make_vec_env(lambda: GazeboCarEnv(), n_envs=1)
+eval_env = make_vec_env(env_id, n_envs=1)
+
 os.makedirs(os.path.dirname('./models'), exist_ok=True)
 os.makedirs(os.path.dirname('./logs'), exist_ok=True)
+
 eval_callback = EvalCallback(
     eval_env,
-    best_model_save_path='./models', # Katalog, gdzie trafi najlepszy model
+    best_model_save_path='./models', # Dir with best models 
     log_path='./logs',
     eval_freq=EVAL_STEPS, # Evaluation with each
     deterministic=True, # True to block exploration, only actions with highest prop    
     render=True, # To visualize best trajectory (methods implemented in enronment: render() and close().
-    callback_on_new_best=None # Call back when new best model, if None, default option: save best model            
+    callback_on_new_best=None, # Call back when new best model, if None, default option: save best model      
+    verbose=2      
 )
 
 # Agent initialisation
@@ -90,12 +137,13 @@ model = PPO(
     vec_env, 
     n_steps=1024,          # n_steps training samples kept in buffer
     batch_size=128,        # 
-    n_epochs=15,           #
+    n_epochs=6,           #
     learning_rate=0.0001,  # 
     gamma=0.995,           # discount factor - how algorythm takes into account future rewards (close to 1 -> future rewards important, close to 0 -> only current reward has importance, greedy)
     policy_kwargs=policy_kwargs, 
     verbose=2,
-    device=DEVICE 
+    device=DEVICE,
+    tensorboard_log=f"runs/{run.id}",
 )
 
 # Final Architecture visualization
@@ -106,10 +154,6 @@ print("----------------------------------")
 # Trening
 print('-'*10)
 print('Starting training')
-print('-'*10)
-model.learn(total_timesteps=TOTAL_TRAINING_STEPS, callback=[wandb_callback, eval_callback])
+print('-'*20)
+model.learn(total_timesteps=TOTAL_STEPS, callback=[wandb_callback, eval_callback])
 model.save("RL_Autonomous_Car_finalmodel_1.zip")
-
-# TODO: 
-# W środowisku w step w info zwracać wartość poszczególnych składowych nagrody i napisać klasę call back która będzie zapisywać dane w wykresie wandb
-# render=True # Sprawdzić czy to napewno funkcja close() ma służyć do zamknięcia tego co otwarło render.. czy nie poiwnno to być w ramach render poprostu. 

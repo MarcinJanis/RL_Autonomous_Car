@@ -1,55 +1,75 @@
 import gymnasium
 from gymnasium import spaces
 import numpy as np
+import cv2
+
+import os
+
 
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image, LaserScan
-from gazebo_msgs.msg import ModelStates
+# from gazebo_msgs.msg import Pose_V, Pose
+from nav_msgs.msg import Odometry
 from ros_gz_interfaces.msg import Contacts
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
-import cv2
+
+from gazebo_msgs.srv import SetEntityState
+from geometry_msgs.msg import Quaternion
+
 import trajectory_gt as gt
 
-class GazeboCarEnv(gym.Env):
-    """
-    Prosty wrapper Gym dla Twojego autka:
-    - akcja: [v_lin_norm, v_ang_norm] w [-1,1]
-    - obserwacja: obraz z kamery 84x84x3 (uint8)
-    """
+class GazeboCarEnv(gymnasium.Env):
 
-    def __init__(self):
+    def __init__(self, rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float):
         super().__init__()
 
-        # --- ROS2 init ---
-        rclpy.init(args=None)
+
+        # --- General inits ---
+        # Create subfolder for saving logs from training
+        self.LOG_DIR = os.path.join(os.getcwd(), f'./training_logs')
+        os.makedirs(name=self.LOG_DIR, exist_ok=True)
+       
+        self.set_state_client = self.node.create_client(SetEntityState, '/gazebo/set_entity_state')
+
+        self.episode_count = 0
+        # --- ROS2 node init ---
+        if not rclpy.ok(): rclpy.init(args=None)
+
         self.node = Node("gym_mecanum_env")
 
-        # --- bridge kamery i lidaru ---
+        # --- bridge for camera and lidar ---
         self.bridge = CvBridge()
 
-        # --- state ---
+        # --- state variables ---
+        # keeps values of obserwation
         self.camera_img = None
         self.laser = None
-        self.global_pose = None 
+        self.global_pose = np.zeros((2), dtype = np.float32)
+        self.global_vel = np.zeros((2), dtype = np.float32)
+
+        self.odom_received = False
+
         self.collision_flag = False
+        self.timeout_flag = False
+        self.destination_reached_flag = False
 
+        # --- rewards value ---
+        self.rewards = rewards 
+        # shape like: { 'velocity': 1, 'trajectory': 5, 'collision': -15, 'timeout': -5, 'destin': 20}
 
-        # --- rewards ---
-        self.rewards = { 'velocity': 1, 'trajectory': 5, 'collision': -15, 'timeout': -5}
-
-        trajectory_points_pth = './siapwpa_ros2_project-main_rl/models/walls/waypoints_il.csv'
+        # init object for distance from trajectory calc
         self.trajectory = gt.traj_gt()
         self.trajectory.setup(trajectory_points_pth, n=100)
 
         # --- info ---
-        self.rest_info = {
-            # Add here all logs when reset 
+        self.reset_info = {
+            # To add here all logs when reset 
             "is_success": False
         }
 
-        # SUB: kamera z Gazebo (po bridge’u)
+        # --- Ros2 Subscribers ---
         self.camera_sub = self.node.create_subscription(
             Image,
             "/world/mecanum_drive/model/vehicle_blue/link/camera_link/sensor/camera_sensor/image",
@@ -65,11 +85,18 @@ class GazeboCarEnv(gym.Env):
         )
 
         self.pose_sub = self.node.create_subscription(
-            ModelStates,
+            Odometry, 
             "/model/vehicle_blue/odometry",
-            self._model_states_cb,
+            self._global_pose_cb,
             10
         )
+
+        # self.vel_sub = self.node.create_subscription(
+        #     Twist,
+        #     "/cmd_vel",
+        #     self._global_vel_cb,
+        #     10
+        # )
 
         self.collision_event_sub = self.node.create_subscription(
             Contacts,
@@ -79,19 +106,19 @@ class GazeboCarEnv(gym.Env):
         )
 
 
-        # PUB: sterowanie MecanumDrive
+        # --- Ros2 Publisher --- 
         self.cmd_pub = self.node.create_publisher(Twist, "/cmd_vel", 10)
 
         # --- Gym spaces ---
 
-        # akcja znormalizowana [-1,1]x[-1,1]
+        # action (norm) shape: [-1,1]x[-1,1]
         self.action_space = spaces.Box(
             low=np.array([-1.0, -1.0], dtype=np.float32),
             high=np.array([1.0, 1.0], dtype=np.float32),
             dtype=np.float32
         )
 
-        # obserwacja = obraz 256x256x3 (uint8)
+        # Observation: RGB image 256x256x3 (uint8)
         self.img_h = 256
         self.img_w = 256
         self.camera_space = spaces.Box(
@@ -100,120 +127,159 @@ class GazeboCarEnv(gym.Env):
             shape=(self.img_h, self.img_w, 3),
             dtype=np.uint8
         )
+        # Observation: Lidar 280 (float32)
         self.lidar_l = 280
+        self.laser_range = 12.0
         self.lidar_space = spaces.Box(
             low=0.0,
-            high=12.0,
-            shape=(self.lidar_l),
+            high=self.laser_range,
+            shape=(self.lidar_l,),
             dtype=np.float32
         )
 
+        # Observation: coposition
         self.observation_space = spaces.Dict({
                     "image": self.camera_space,
                     "lidar": self.lidar_space,
-                    # "pose": self.state_space
                 })
 
-        # parametry fizyczne sterowania
-        self.max_lin = 3.0   # maks. prędkość liniowa [m/s]
-        self.max_ang = 2.0   # maks. prędkość kątowa [rad/s]
+        # --- Boundaries for actions and similation --
+        self.max_lin = max_lin_vel   # maks. linaer velocity [m/s]
+        self.max_ang = max_ang_vel  # maks. angular velocity [rad/s]
 
         self.step_count = 0
-        self.max_steps = 500  # długość jednego epizodu w krokach
+        self.max_steps = max_steps_per_episode  # steps per each episode
 
-    # ------------- ROS CALLBACKS ------------- #
+        # # --- perform some action befor first step:
+        # self.reset_before_first_step()
+
+
+
+    # --- Ros2 Callbacks --- 
     def _camera_cb(self, msg: Image):
         try:
             img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-            # zmniejszamy i zamieniamy na RGB (opcjonalnie)
-            img = cv2.resize(img, (self.img_w, self.img_h))
+            # img = cv2.resize(img, (self.img_w, self.img_h)) # Images shall be already resized 
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             self.camera_img = img
         except Exception as e:
-            self.node.get_logger().warn(f"Camera conversion error: {e}")
+            self.node.get_logger().warn(f"[Err] Cannot get data from camera:\n{e}")
 
     def _lidar_cb(self, msg: LaserScan):
-        self.laser = np.array(msg.ranges, dtype=np.float32)
+        try:
+            self.laser = np.array(msg.ranges, dtype=np.float32)
+            self.laser = np.clip(self.laser, 0.0, self.laser_range)
+        except Exception as e:
+            self.node.get_logger().warn(f"[Err] Cannot get data from lidaer:\n{e}")
+       
+    def _global_pose_cb(self, msg: Odometry):
+        try:
+                self.global_pose = np.array([
+                    msg.pose.pose.position.x,
+                    msg.pose.pose.position.y
+                ])
 
-        # MEGA DEBUG:
-        self.node.get_logger().info(
-            f"[LIDAR CB] Otrzymano skan: {len(self.laser)} próbek, "
-            f"min={np.nanmin(self.laser):.2f}, max={np.nanmax(self.laser):.2f}"
-        )
+                self.global_vel = np.array([
+                    msg.twist.twist.linear.x,
+                    msg.twist.twist.linear.y
+                ])
+        
+        except Exception as e:
+            self.node.get_logger().warn(f"[Err] Cannot get data from odometry:\n{e}")
 
-    def _model_states_cb(self, msg: ModelStates):
-
-        if "vehicle_blue" in msg.name:
-            idx = msg.name.index("vehicle_blue")
-            state = msg.pose[idx]
-            self.global_pose = np.array((state.position.x, state.position.y, state.velocity.x, state.velocity.y))
-
-            # if oritntation will be needed:
-            # q = state.orientation
-            # roll, pitch, yaw = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
-
+    # def _global_vel_cb(self, msg: Twist):
+    #         try: 
+    #             self.global_vel = np.array((msg.linear.x, msg.linear.y))
+    #         except Exception as e: 
+    #             self.node.get_logger().warn(f"[Err] Cannot get data from twist:\n{e}")
 
     def _collision_cb(self, msg: Contacts):
         if len(msg.contacts) > 0:
             self.collision_flag = True
         else: 
             self.collision_flag = False
+
     # ------------- GYM API ------------- #
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
 
-        # zatrzymaj robota
+        # stop robot
         self._send_cmd(0.0, 0.0)
 
+        self.episode_count += 1
         self.step_count = 0
         self.collision_flag = False
-        # TODO: tutaj możesz kiedyś dodać prawdziwy reset świata (gz service)
-        # ------------------------
+        self.timeout_flag = False
 
+        # put on random posiition:
+        x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
+        self._teleport_car(x_st, y_st, yaw_st)
 
-        # ------------------------
         obs = self._get_obs_blocking()
-        return obs, self.rest_info   
+        return obs, self.reset_info   
 
     def step(self, action):
         self.step_count += 1
 
-
-        # przeskaluj akcję z [-1,1] na zakres prędkości
+        # scale norm action (-1, 1) to action boundaries
         v_norm = float(np.clip(action[0], -1.0, 1.0))
         w_norm = float(np.clip(action[1], -1.0, 1.0))
 
         v = v_norm * self.max_lin
         w = w_norm * self.max_ang
 
+        # perform action
         self._send_cmd(v, w)
 
-        # obsługa callbacków ROS
+        # callbacks
         rclpy.spin_once(self.node, timeout_sec=0.05)
 
-        if self.laser is None:
-          self.node.get_logger().warn("[STEP] LIDAR: self.laser is None")
-        else:
-          self.node.get_logger().info(
-              f"[STEP] LIDAR: {len(self.laser)} próbek, min={np.nanmin(self.laser):.2f}"
-          )
-
+        # if self.laser is None:
+        #   self.node.get_logger().warn("[STEP] LIDAR: self.laser is None")
+        # else:
+        #   self.node.get_logger().info(
+        #       f"[STEP] LIDAR: {len(self.laser)} próbek, min={np.nanmin(self.laser):.2f}"
+        #   )
+        
         obs = self._get_obs()
+        x, y = self.global_pose
+        vx, vy = self.global_vel
+        self.trajectory.add2traj((x, y, vx, vy))
+        self.destination_reached_flag  = self.trajectory.check_if_dest_reached(x, y, 
+                                                                               fin_line_o = (-9.12, 14.61), 
+                                                                               fin_line_i = (-4.4, 14.61), 
+                                                                               y_offset = 0.5)
+
         reward = self._compute_reward(obs)
 
+        # consider termination conditions
         terminated = False
         truncated = False
+
+        # if goal reached -> terminated
+        if self.destination_reached_flag:
+            terminated = True
+
         # if max steps reached -> terminated
-        if self.step_count >= self.max_steps: truncated = True
+        if self.step_count >= self.max_steps: 
+            self.timeout_flag = True
+            truncated = True
+
         # if collision detected -> terminated 
         if self.collision_flag: terminated = True
 
-        if terminated: truncated = False # Terminated more important than truncated
+        # Terminated more important than truncated
+        if terminated: truncated = False 
 
+        # log info 
         info = {}
 
-        # return obs, reward, done, info
         return obs, reward, terminated, truncated, info
+
+
+    def render(self):
+        self.trajectory.visu_save(self.LOG_DIR, self.episode_count)
+        self.trajectory.traj_save(self.LOG_DIR, self.episode_count)
 
     # ------------- POMOCNICZE ------------- #
     def _send_cmd(self, v, w):
@@ -233,35 +299,68 @@ class GazeboCarEnv(gym.Env):
 
         return {"image": self.camera_img, "lidar": self.laser}
 
+ 
     def _get_obs_blocking(self, timeout=2.0):
-        """
-        Poczekaj aż przyjdzie pierwsza klatka z kamery (do resetu).
-        """
         waited = 0.0
         dt = 0.05
-        while self.camera_img is None and waited < timeout:
+        while (self.camera_img is None or self.laser is None or not self.odom_received) and waited < timeout:
             rclpy.spin_once(self.node, timeout_sec=dt)
             waited += dt
         return self._get_obs()
 
+
     def _compute_reward(self, obs):
         reward = 0 
-        # self.rewards = { 'velocity': 1, 'trajectory': 5, 'collision': -15, 'timeout': -5}
-        x, y, vx, vy = self.global_pose
+        # self.rewards = { 'velocity': 1, 'trajectory': -5, 'collision': -15, 'timeout': -5, 'destin': 20}
+    
+        # get data
+        x, y = self.global_pose
+        vx, vy = self.global_vel
 
         # 1 - reward for velocity
-        v_xy = np.sqrt(vx*vx, vy*vy)
+        v_xy = np.sqrt(vx*vx + vy*vy)
         reward += v_xy * self.rewards['velocity']
 
         # 2 - reward for distance from desire trajectory
-        x_cp, y_cp, dist = self.trajectory.get_dist(x, y) # x_cp, y_cp - closet points on trajectory
-        reward += dist * self.rewards['trajectory'] * -1
+        _, _, dist = self.trajectory.get_dist(x, y) # x_cp, y_cp - closet points on trajectory
+        reward += dist * self.rewards['trajectory'] 
         
         # 3 - reward for collision
+        if self.collision_flag:
+            reward += self.rewards['collision']
 
         # 4 - reward for timeout
+        if self.timeout_flag:
+            reward += self.rewards['timeout']
+
+        # 5 - check if destination reached:
+        if self.destination_reached_flag:
+            reward += self.rewards['destin']
+
         return reward
 
+    def _teleport_car(self, x, y, yaw):
+        req = SetEntityState.Request() # request object
+        req.state.name = 'vehicle_blue' # object identification
+        req.state.pose.position.x = float(x)
+        req.state.pose.position.y = float(y)
+        req.state.pose.position.z = 0.05 # a little bit over ground to avoid blocking
+        req.state.twist.linear.x = 0.0
+        req.state.twist.linear.y = 0.0
+        req.state.pose.orientation = self._get_quaternion_from_yaw(yaw)
+
+        # send request and block superior fcn until request done
+        future = self.set_state_client.call_async(req)
+        rclpy.spin_until_future_complete(self.node, future, timeout_sec=1.0)
+
+    def _get_quaternion_from_yaw(self, yaw):
+        q = Quaternion()
+        q.x = 0.0
+        q.y = 0.0
+        q.z = np.sin(yaw / 2.0)
+        q.w = np.cos(yaw / 2.0)
+        return q
+        
     def close(self):
         self._send_cmd(0.0, 0.0)
         self.node.destroy_node()

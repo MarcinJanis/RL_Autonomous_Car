@@ -4,6 +4,7 @@ import segmentation_models_pytorch as smp
 from torchvision.models import resnet18
 from torchvision import transforms
 
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor 
 
 class imageProcessingModule(nn.Module):
   '''
@@ -13,7 +14,7 @@ class imageProcessingModule(nn.Module):
   Input: RGB Image (B, C, H, W): C = 3, H = 256, W =256
   Output: Features map: (B, C, H, W): C = 512, H = 8, W = 8
   '''
-  def __init__(self, check_point_pth = './siapwpa_ros2_project-main/net_road_segmentation/checkpoint/best_weights.ckpt', n_classes = 8, device = 'cuda'):
+  def __init__(self, encoder_check_point_pth , n_classes = 8, device = 'cuda'):
     super().__init__()
     
     #  init full endoer model 
@@ -25,7 +26,7 @@ class imageProcessingModule(nn.Module):
         )
     
     #   load pre-trained weights
-    checkpoint = torch.load(check_point_pth, map_location=device)
+    checkpoint = torch.load(encoder_check_point_pth, map_location=device)
     state_dict = checkpoint['state_dict'] if 'state_dict' in checkpoint else checkpoint
     new_state_dict = {}
     for k, v in state_dict.items():
@@ -43,15 +44,15 @@ class imageProcessingModule(nn.Module):
     x = self.feature_extractor(x)
     return x[-1]
   
-  def freeze_encoder(self):
-    for param in self.feature_extractor.parameters():
-      param.requires_grad = False
+  # def freeze_encoder(self):
+  #   for param in self.feature_extractor.parameters():
+  #     param.requires_grad = False
 
-  def unfreeze_encoder(self, first_layers = 3):
+  def freeze_encoder(self, unfreezed_layers = 3):
     # first_layer - number of first layer that shall be unfreeze
     # first_layer shall be less than total number of encoder layeres, that is 5 (in ResNet18)
     for idx, block in enumerate(self.feature_extractor.blocks):
-      if idx > first_layers:
+      if idx > unfreezed_layers:
         for param in block.parameters():
           param.requires_grad = True
       else:
@@ -93,34 +94,43 @@ class lidarProcessingModule(nn.Module):
     return x 
 
 
-class AgentNet(nn.Module):
-  def __init__(self, action = 2, device = 'cuda'):
-    super().__init__()
-    self.encoder_RGB = imageProcessingModule(device = device) # Vector 
+class AgentNet(BaseFeaturesExtractor):
+  def __init__(self, observation_space, encoder_check_point_pth, device = 'cuda', features_dim = 1024):
+    super().__init__(observation_space, features_dim)
+
+    self.encoder_RGB = imageProcessingModule(encoder_check_point_pth, device = device) # Vector 
+    self.encoder_RGB.freeze_encoder(unfreezed_layers = 3)
+
     self.encoder_Lidar = lidarProcessingModule() # Vector: 512
 
     self.AvgPoolRGB = nn.AdaptiveAvgPool2d((1, 1)) # 8x8x512 -> 1x1x512
 
-
-    self.agent_head = nn.Sequential(nn.Linear(512*2, 128),
-                                    nn.ReLU(),
-                                    nn.Dropout(p=0.5),
-                                    nn.Linear(128, 64),
-                                    nn.ReLU(),
-                                    nn.Dropout(p=0.5),
-                                    nn.Linear(64, action))
+    # self.agent_head = nn.Sequential(nn.Linear(512*2, 128),
+    #                                 nn.ReLU(),
+    #                                 nn.Dropout(p=0.5),
+    #                                 nn.Linear(128, 64),
+    #                                 nn.ReLU(),
+    #                                 nn.Dropout(p=0.5),
+    #                                 nn.Linear(64, action))
     
-    self.critic_head = nn.Sequential(nn.Linear(512*2, 128),
-                                     nn.ReLU(),
-                                     nn.Dropout(p=0.5),
-                                     nn.Linear(128, 64),
-                                     nn.ReLU(),
-                                     nn.Dropout(p=0.5),
-                                     nn.Linear(64, 1))
+    # self.critic_head = nn.Sequential(nn.Linear(512*2, 128),
+    #                                  nn.ReLU(),
+    #                                  nn.Dropout(p=0.5),
+    #                                  nn.Linear(128, 64),
+    #                                  nn.ReLU(),
+    #                                  nn.Dropout(p=0.5),
+    #                                  nn.Linear(64, 1))
 
 
-  def forward(self, img, lidar):
+  def forward(self, observations):
 
+    # get data
+    img = observations['image'] # (B, H, W, C)
+    lidar = observations['lidar'] 
+
+    img = img.permute(0, 3, 1, 2)
+    img = img.float() / 255.0
+    
     # Image branch
     img_features = self.encoder_RGB(img)
     img_features = self.AvgPoolRGB(img_features) # (B, C=512, H=8, W=8) -> (B, C=512, H=1, W=1)
@@ -129,27 +139,28 @@ class AgentNet(nn.Module):
     # Lidar branch 
     lidar_features = self.encoder_Lidar(lidar) # (B, C=512)
 
-    # Concatinate
+    # Concatenate
     features = torch.cat((img_features, lidar_features), dim = 1) # (B, C1=512) + (B, C2=512) -> (B, C1+C2=1024) 
 
     # Decision head
-    x = self.agent_head(features) 
+    # x = self.agent_head(features) 
     # returns: x = (x1, x2), where:   
     # -> x1 -> linear velocity in x direction
     # -> x2 -> angular velocity around the z axis 
 
     # Critic head
-    v = self.critic_head(features) 
+    # v = self.critic_head(features) 
     # returns: v - predicted prize value
 
-    return x, v
+    # return x, v
+    return features # shape: (B, 1024)
     
 
 
-class AgentDeployModel:
-  def __init__(self, device):
+# class AgentDeployModel:
+#   def __init__(self, device):
 
-    model = AgentNet(device)
+#     model = AgentNet(device)
 
 
 
