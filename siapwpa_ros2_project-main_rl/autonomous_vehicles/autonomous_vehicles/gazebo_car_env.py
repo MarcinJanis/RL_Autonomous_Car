@@ -29,19 +29,19 @@ class GazeboCarEnv(gym.Env):
         # --- bridge kamery i lidaru ---
         self.bridge = CvBridge()
 
-        # state: 
+        # --- state ---
         self.camera_img = None
         self.laser = None
         self.global_pose = None 
         self.collision_flag = False
 
 
-        # rewards
+        # --- rewards ---
         self.rewards = { 'velocity': 1, 'trajectory': 5, 'collision': -15, 'timeout': -5}
 
         trajectory_points_pth = './siapwpa_ros2_project-main_rl/models/walls/waypoints_il.csv'
-        self.trajectory = gt.traj_gt(trajectory_points_pth)
-        self.trajectory.setup()
+        self.trajectory = gt.traj_gt()
+        self.trajectory.setup(trajectory_points_pth, n=100)
 
         # --- info ---
         self.rest_info = {
@@ -173,7 +173,7 @@ class GazeboCarEnv(gym.Env):
 
         # ------------------------
         obs = self._get_obs_blocking()
-        return obs, self.rest_info  # co to info 
+        return obs, self.rest_info   
 
     def step(self, action):
         self.step_count += 1
@@ -250,21 +250,17 @@ class GazeboCarEnv(gym.Env):
         x, y, vx, vy = self.global_pose
 
         # 1 - reward for velocity
-        v_xy = np.sqrt(vx**2, vy**2)
+        v_xy = np.sqrt(vx*vx, vy*vy)
         reward += v_xy * self.rewards['velocity']
 
         # 2 - reward for distance from desire trajectory
-        x_cp, y_cp, dist = self.trajectory.get_dist(x, y, n=100) # x_cp, y_cp - closet points on trajectory
-        reward += v_xy * self.rewards['trajectory'] * -1
+        x_cp, y_cp, dist = self.trajectory.get_dist(x, y) # x_cp, y_cp - closet points on trajectory
+        reward += dist * self.rewards['trajectory'] * -1
         
         # 3 - reward for collision
 
         # 4 - reward for timeout
-
-        
-        # NA RAZIE: zero – do zdefiniowania wg Twojego zadania
-        # np. można użyć lidar/camera do karania za zbliżanie się do przeszkód
-        return 0.0
+        return reward
 
     def close(self):
         self._send_cmd(0.0, 0.0)
