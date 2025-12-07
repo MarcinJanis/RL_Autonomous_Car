@@ -1,3 +1,23 @@
+___
+Pierwsze testy
+
+(uruchmomić z terminala z poziomu: ./RL_Autonomous_Car albo zmienic w pliku training_SB3.py ścieżki względne na bezwzględne)
+
+Uruchomić plik:
+./siapwpa_ros2_project-main_rl/autonomous_car/autonomous_car/check_env_SB3.py
+
+jak to zadziała i nie będzie błędów to uruchomić:
+./siapwpa_ros2_project-main_rl/autonomous_car/autonomous_car/training_SB3.py
+
+
+
+___
+
+
+
+
+
+
 # TODO 
 ___
 # 1) Środowisko/ World do RL 
