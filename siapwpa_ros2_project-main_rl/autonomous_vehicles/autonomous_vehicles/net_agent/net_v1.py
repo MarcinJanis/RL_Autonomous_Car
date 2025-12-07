@@ -144,7 +144,10 @@ class AgentNet(BaseFeaturesExtractor):
     img = observations['image'] # (B, H, W, C)
     lidar = observations['lidar'] 
 
-    img = img.permute(0, 3, 1, 2)
+    if img.shape[-1] == 3:
+      img = img.permute(0, 3, 1, 2)
+
+
     img = img.float() / 255.0
 
     # Image branch

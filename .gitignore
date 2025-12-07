@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 
 siapwpa_ros2_project-main_rl/log/latest
+siapwpa_ros2_project-main_rl/wandb/

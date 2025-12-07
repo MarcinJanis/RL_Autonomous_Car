@@ -133,7 +133,7 @@ class traj_gt:
         # ensure that car will have to through 20% of map
         x, y = self.spline_pts[idx, :] # spawn point
         x_n, y_n = self.spline_pts[idx + 1, :] # next point
-        yaw = np.atan2(y_n - y, x_n - x) # yaw [rad]
+        yaw = np.arctan2(y_n - y, x_n - x) # yaw [rad]
         return x, y, yaw
        
 # gt = traj_gt()

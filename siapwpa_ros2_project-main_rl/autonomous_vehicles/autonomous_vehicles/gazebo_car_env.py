@@ -31,13 +31,14 @@ class GazeboCarEnv(gymnasium.Env):
         self.LOG_DIR = os.path.join(os.getcwd(), f'./training_logs')
         os.makedirs(name=self.LOG_DIR, exist_ok=True)
        
-        self.set_state_client = self.node.create_client(SetEntityState, '/gazebo/set_entity_state')
+        
 
         self.episode_count = 0
         # --- ROS2 node init ---
         if not rclpy.ok(): rclpy.init(args=None)
 
         self.node = Node("gym_mecanum_env")
+        self.set_state_client = self.node.create_client(SetEntityState, '/gazebo/set_entity_state')
 
         # --- bridge for camera and lidar ---
         self.bridge = CvBridge()
@@ -245,7 +246,7 @@ class GazeboCarEnv(gymnasium.Env):
         obs = self._get_obs()
         x, y = self.global_pose
         vx, vy = self.global_vel
-        self.trajectory.add2traj((x, y, vx, vy))
+        self.trajectory.add2trajectory((x, y, vx, vy))
         self.destination_reached_flag  = self.trajectory.check_if_dest_reached(x, y, 
                                                                                fin_line_o = (-9.12, 14.61), 
                                                                                fin_line_i = (-4.4, 14.61), 

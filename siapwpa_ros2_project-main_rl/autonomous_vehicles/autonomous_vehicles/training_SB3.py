@@ -34,7 +34,7 @@ rewards =  { 'velocity': 1, 'trajectory': -5, 'collision': -15, 'timeout': -5, '
 # timeout - punishment for exceed max steps before reached goal
 # destin - reward for reach goal  
 
-trajectory_goal = './siapwpa_ros2_project-main_rl/models/walls/waypoints_il_srodek.csv'
+trajectory_goal = 'models/walls/waypoints_il_srodek.csv'
 
 # boundaries for car
 max_linear_velocity = 3.0
@@ -58,24 +58,26 @@ run = wandb.init(
     config=config,
     sync_tensorboard=True,
     monitor_gym=False,
-    save_code=False
+    save_code=False,
+    mode='online'
 )
 
 wandb_callback = WandbCallback(
     model_save_path=None,   
-    save_model=False,      
+    # save_model=False,      
     verbose=2,
-    gradient_save_freq=0
+    # gradient_save_freq=0
 )
 
 # --- Init Environment ---
-env = gazebo_env.GazeboCarEnv(rewards = rewards, 
-                              trajectory_points_pth = trajectory_goal, 
-                              max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
-                              max_lin_vel = max_linear_velocity,
-                              max_ang_vel = max_angular_velocity)
+env = gazebo_env(rewards = rewards, 
+                trajectory_points_pth = trajectory_goal, 
+                max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
+                max_lin_vel = max_linear_velocity,
+                max_ang_vel = max_angular_velocity)
 
 # check compiliance
+
 
 print("Checking environment...")
 check_env(env, warn=True)
@@ -85,7 +87,7 @@ print("Environment checked.")
 
 # --- Init model and policy config---
 
-encoder_check_point_pth = './siapwpa_ros2_project-main/autonomous_vehicles/autonomous_vehicles/net_agent/best_weights.ckpt'
+encoder_check_point_pth = 'autonomous_vehicles/autonomous_vehicles/net_agent/best_weights.ckpt'
 
 head_arch = dict(
     pi=[512, 64], # Policy head - action
@@ -94,9 +96,8 @@ head_arch = dict(
 
 policy_kwargs = dict(
     features_extractor_class=agent.AgentNet, #(encoder_check_point_pth, action = 2, device = DEVICE), # featuers extractor model 
-    features_extractor_kwargs=dict(          
-        encoder_check_point_pth=encoder_check_point_pth, 
-        action=2, 
+    features_extractor_kwargs=dict(     
+        encoder_check_point_pth=encoder_check_point_pth,  
         device=DEVICE,
         features_dim=1024
     ),
@@ -104,11 +105,11 @@ policy_kwargs = dict(
 )
 
 # Environment vectorization - for parallel training
-env_id = lambda: gazebo_env.GazeboCarEnv(rewards = rewards, 
-                              trajectory_points_pth = trajectory_goal, 
-                              max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
-                              max_lin_vel = max_linear_velocity,
-                              max_ang_vel = max_angular_velocity)
+env_id = lambda: gazebo_env(rewards = rewards, 
+                            trajectory_points_pth = trajectory_goal, 
+                            max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
+                            max_lin_vel = max_linear_velocity,
+                            max_ang_vel = max_angular_velocity)
 
 vec_env = make_vec_env(env_id, n_envs=ENV_PARALLEL)
 # -> Faster trainging (GPU waits until simulation ennds on CPU, its better to use all of available CPU threads 
