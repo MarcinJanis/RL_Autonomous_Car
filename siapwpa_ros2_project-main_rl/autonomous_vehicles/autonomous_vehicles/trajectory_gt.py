@@ -40,6 +40,7 @@ class traj_gt:
     
     def visu_reset(self):
         self.trajectory = []
+        self.velocity = []
 
     def get_trajectory(self):
         if not self.trajectory:

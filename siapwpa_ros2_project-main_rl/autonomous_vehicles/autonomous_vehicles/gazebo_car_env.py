@@ -213,6 +213,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.collision_flag = False
         self.timeout_flag = False
 
+        self.trajectory.visu_reset()
         # put on random posiition:
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
         self._teleport_car(x_st, y_st, yaw_st)
