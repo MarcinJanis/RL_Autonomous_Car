@@ -183,7 +183,8 @@ class GazeboCarEnv(gymnasium.Env):
                     msg.twist.twist.linear.x,
                     msg.twist.twist.linear.y
                 ])
-        
+
+                self.odom_received = True
         except Exception as e:
             self.node.get_logger().warn(f"[Err] Cannot get data from odometry:\n{e}")
 

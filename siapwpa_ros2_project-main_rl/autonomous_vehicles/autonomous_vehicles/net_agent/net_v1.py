@@ -48,16 +48,32 @@ class imageProcessingModule(nn.Module):
   #   for param in self.feature_extractor.parameters():
   #     param.requires_grad = False
 
-  def freeze_encoder(self, unfreezed_layers = 3):
-    # first_layer - number of first layer that shall be unfreeze
-    # first_layer shall be less than total number of encoder layeres, that is 5 (in ResNet18)
-    for idx, block in enumerate(self.feature_extractor.blocks):
-      if idx > unfreezed_layers:
-        for param in block.parameters():
-          param.requires_grad = True
-      else:
-        for param in block.parameters():
+  # def freeze_encoder(self, unfreezed_layers = 3):
+  #   # first_layer - number of first layer that shall be unfreeze
+  #   # first_layer shall be less than total number of encoder layeres, that is 5 (in ResNet18)
+  #   for idx, block in enumerate(self.feature_extractor.blocks):
+  #     if idx > unfreezed_layers:
+  #       for param in block.parameters():
+  #         param.requires_grad = True
+  #     else:
+  #       for param in block.parameters():
+  #         param.requires_grad = False
+
+  def freeze_encoder(self, unfreezed_layers=3):
+      # get child items
+      layers = list(self.feature_extractor.children())
+      total_layers = len(layers)
+      
+      # Freeze all
+      for param in self.feature_extractor.parameters():
           param.requires_grad = False
+      # Unfreeze a few last layers
+      for i in range(1, unfreezed_layers + 1):
+          if total_layers - i >= 0:
+              for param in layers[total_layers - i].parameters():
+                  param.requires_grad = True
+
+
 
 
 class lidarProcessingModule(nn.Module):
@@ -130,7 +146,7 @@ class AgentNet(BaseFeaturesExtractor):
 
     img = img.permute(0, 3, 1, 2)
     img = img.float() / 255.0
-    
+
     # Image branch
     img_features = self.encoder_RGB(img)
     img_features = self.AvgPoolRGB(img_features) # (B, C=512, H=8, W=8) -> (B, C=512, H=1, W=1)
