@@ -71,10 +71,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.trajectory.setup(trajectory_points_pth, n=100)
 
         # --- info ---
-        self.reset_info = {
-            # To add here all logs when reset 
-            "is_success": False
-        }
+        self.reset_info = {}
 
         # --- Ros2 Subscribers ---
         self.camera_sub = self.node.create_subscription(
@@ -218,12 +215,17 @@ class GazeboCarEnv(gymnasium.Env):
     # ------------- GYM API ------------- #
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
-        
         # stop robot
         self._send_cmd(0.0, 0.0)
         if self.episode_count > 0:
-            self.node.get_logger().warn(f"[Log] Episode {self.episode_count} finished.") 
-            self.node.get_logger().warn(f"Rewards components sum:\n{self.rewards_components_sum}")
+            self.node.get_logger().warn(f"Episode {self.episode_count} finished with {self.step_count} steps.") 
+            self.node.get_logger().warn(f"Rewards: \
+                                        velocity: {self.rewards_components_sum[0]} \
+                                        trajectory: {self.rewards_components_sum[1]} \
+                                        ang_vel: {self.rewards_components_sum[2]} \
+                                        collision: {self.rewards_components_sum[3]} \
+                                        timeout: {self.rewards_components_sum[4]} \
+                                        destin: {self.rewards_components_sum[5]} ")
             self.rewards_components_sum = np.zeros((len(self.rewards)), dtype = np.float32)
 
         self.episode_count += 1
@@ -231,18 +233,20 @@ class GazeboCarEnv(gymnasium.Env):
         self.collision_flag = False
         self.timeout_flag = False
 
+        self.node.get_logger().warn(f"[Episode|{self.episode_count}] Episode start") 
+
         self.trajectory.visu_reset()
         # put on random posiition:
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
+        self.node.get_logger().warn(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
         self._teleport_car(x_st, y_st, yaw_st)
-        self.node.get_logger().warn(f"New episode strats from: {x_st}, {y_st}, {yaw_st}\n")
-
         obs = self._get_obs_blocking()
         return obs, self.reset_info   
 
     def step(self, action):
+        if self.step_count == 0:
+            self.node.get_logger().warn(f"> Episode in progres...") 
         self.step_count += 1
-
         # scale norm action (-1, 1) to action boundaries
         v_norm = float(np.clip(action[0], -1.0, 1.0))
         w_norm = float(np.clip(action[1], -1.0, 1.0))
@@ -356,7 +360,7 @@ class GazeboCarEnv(gymnasium.Env):
         if self.collision_flag:
             self.rewards_components[3] = self.rewards['collision']
             # reward += self.rewards['collision']
-            self.node.get_logger().warn(f"[Collision]")
+            self.node.get_logger().warn(f"[Event] Collision detected.")
         else:
             self.rewards_components[3] = 0.0
 
@@ -371,7 +375,7 @@ class GazeboCarEnv(gymnasium.Env):
         if self.destination_reached_flag:
             self.rewards_components[5] = self.rewards['destin']
             # reward += self.rewards['destin']
-            self.node.get_logger().warn(f"[Destination reached]")
+            self.node.get_logger().warn(f"[Event] Destination reached.")
         else:
             self.rewards_components[5] = 0.0
 
@@ -389,11 +393,20 @@ class GazeboCarEnv(gymnasium.Env):
         req.state.pose.position.z = 0.05 # a little bit over ground to avoid blocking
         req.state.twist.linear.x = 0.0
         req.state.twist.linear.y = 0.0
+        req.state.twist.angular.z = 0.0
         req.state.pose.orientation = self._get_quaternion_from_yaw(yaw)
-
+        # check if service is available
+        if not self.set_state_client.wait_for_service(timeout_sec=2.0):
+             self.node.get_logger().error('[Error] Request service is not available.')
         # send request and block superior fcn until request done
         future = self.set_state_client.call_async(req)
-        rclpy.spin_until_future_complete(self.node, future, timeout_sec=1.0)
+        rclpy.spin_until_future_complete(self.node, future, timeout_sec=2.0)
+        if future.result() is not None and future.result().success:
+            self.node.get_logger().info(f"[Event] Teleport successful to x={x:.2f}, y={y:.2f}, yaw={yaw:.2f}")
+        elif future.result() is not None:
+            self.node.get_logger().error(f"[Error] Teleport failed: {future.result().status_message}")
+        else:
+            self.node.get_logger().error("[Error] Teleport request timed out or failed to get result.")
 
     def _get_quaternion_from_yaw(self, yaw):
         q = Quaternion()
