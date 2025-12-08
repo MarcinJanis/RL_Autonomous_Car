@@ -34,7 +34,7 @@ rewards =  { 'velocity': 1, 'trajectory': -5, 'collision': -15, 'timeout': -5, '
 # timeout - punishment for exceed max steps before reached goal
 # destin - reward for reach goal  
 
-trajectory_goal = 'models/walls/waypoints_il_srodek.csv'
+trajectory_goal = '/home/developer/ros2_ws/src/models/walls/waypoints_prawy_srodek.csv'
 
 # boundaries for car
 max_linear_velocity = 3.0
