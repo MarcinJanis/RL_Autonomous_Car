@@ -320,7 +320,8 @@
     </model>
 
     <model name='vehicle_blue' xmlns:gz='http://gazebosim.org/schema'>
-      <pose>-6.65 14.61 0.33 0 0 -1.55</pose>
+      <!-- <pose>-6.65 14.61 0.33 0 0 -1.55</pose> -->
+      <pose>-6.65 10.0 0.33 0 0 -1.55</pose>
       <link name='chassis'>
         <pose>-0.151427 0 0.175 0 0 0</pose>
         <inertial>

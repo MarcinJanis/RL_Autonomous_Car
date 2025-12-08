@@ -244,7 +244,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.step_count += 1
 
         # scale norm action (-1, 1) to action boundaries
-        v_norm = float(np.clip(action[0], -1.0, 1.0))
+        v_norm = float(np.clip(action[0], 0.0, 1.0))
         w_norm = float(np.clip(action[1], -1.0, 1.0))
 
         v = v_norm * self.max_lin
@@ -379,7 +379,7 @@ class GazeboCarEnv(gymnasium.Env):
 
         self.rewards_components_sum += self.rewards_components
 
-        return reward
+        return float(reward)
 
     def _teleport_car(self, x, y, yaw):
         req = SetEntityState.Request() # request object
@@ -394,6 +394,7 @@ class GazeboCarEnv(gymnasium.Env):
         # send request and block superior fcn until request done
         future = self.set_state_client.call_async(req)
         rclpy.spin_until_future_complete(self.node, future, timeout_sec=1.0)
+
 
     def _get_quaternion_from_yaw(self, yaw):
         q = Quaternion()
