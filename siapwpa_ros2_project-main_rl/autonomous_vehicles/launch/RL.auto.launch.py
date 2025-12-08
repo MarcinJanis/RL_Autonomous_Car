@@ -22,7 +22,8 @@ def generate_launch_description():
             '/world/mecanum_drive/model/vehicle_blue/link/camera_link/sensor/camera_sensor/image@sensor_msgs/msg/Image@gz.msgs.Image',
             '/world/mecanum_drive/model/vehicle_blue/link/lidar_link/sensor/lidar/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan',
             '/model/vehicle_blue/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry',
-            '/world/mecanum_drive/model/track_model/link/track_link/sensor/walls_contact_sensor/contact@ros_gz_interfaces/msg/Contacts@gz.msgs.Contacts',
+            # '/world/mecanum_drive/model/track_model/link/track_link/sensor/walls_contact_sensor/contact@ros_gz_interfaces/msg/Contacts@gz.msgs.Contacts',
+            '/world/mecanum_drive/model/vehicle_blue/link/chassis/sensor/chassis_contact_sensor/contact@ros_gz_interfaces/msg/Contacts@gz.msgs.Contacts',
             
         ],
         output='screen'

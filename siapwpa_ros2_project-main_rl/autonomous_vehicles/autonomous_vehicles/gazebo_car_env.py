@@ -109,7 +109,8 @@ class GazeboCarEnv(gymnasium.Env):
 
         self.collision_event_sub = self.node.create_subscription(
             Contacts,
-            "/world/mecanum_drive/model/track_model/link/track_link/sensor/walls_contact_sensor/contact",
+            # "/world/mecanum_drive/model/track_model/link/track_link/sensor/walls_contact_sensor/contact",
+            "/world/mecanum_drive/model/vehicle_blue/link/chassis/sensor/chassis_contact_sensor/contact",
             self._collision_cb,
             qos_profile_sensor_data
         )
