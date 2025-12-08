@@ -8,6 +8,7 @@ import numpy as np
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.env_util import make_vec_env
 
@@ -27,7 +28,7 @@ TOTAL_STEPS = 1000000 # Total steps
 EVAL_STEPS = 10000 # Evaluation after this amount of steps
 MAX_STEPS_PER_EPISODE = 5000 # Steps per episoed (max)
 
-rewards =  { 'velocity': 1, 'trajectory': -5, 'collision': -15, 'timeout': -5, 'destin': 20 }
+rewards =  { 'velocity': 1, 'trajectory': -5, 'ang_vel': -0.1, 'collision': -15, 'timeout': -5, 'destin': 20 }
 # velocity - reward for velocity to motive car to explore
 # trajectory - punishment for distance from desired trajectory 
 # collision - punishment for collision
