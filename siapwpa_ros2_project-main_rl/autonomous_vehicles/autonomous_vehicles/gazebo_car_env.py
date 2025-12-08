@@ -2,6 +2,7 @@ import gymnasium
 from gymnasium import spaces
 import numpy as np
 import cv2
+import subprocess
 
 import os
 
@@ -15,7 +16,9 @@ from ros_gz_interfaces.msg import Contacts
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 
-from gazebo_msgs.srv import SetEntityState
+from ros_gz_interfaces.srv import SetEntityPose
+from ros_gz_interfaces.msg import Entity
+
 from geometry_msgs.msg import Quaternion
 
 import trajectory_gt as gt
@@ -42,7 +45,9 @@ class GazeboCarEnv(gymnasium.Env):
         if not rclpy.ok(): rclpy.init(args=None)
 
         self.node = Node("gym_mecanum_env")
-        self.set_state_client = self.node.create_client(SetEntityState, '/gazebo/set_entity_state')
+        # self.set_state_client = self.node.create_client(SetEntityState, '/gazebo/set_entity_state')
+        self.set_state_client = self.node.create_client(SetEntityPose, '/world/mecanum_drive/set_pose')
+        
 
         # --- bridge for camera and lidar ---
         self.bridge = CvBridge()
@@ -240,6 +245,7 @@ class GazeboCarEnv(gymnasium.Env):
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
         self.node.get_logger().warn(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
         self._teleport_car(x_st, y_st, yaw_st)
+        
         obs = self._get_obs_blocking()
         return obs, self.reset_info   
 
@@ -386,27 +392,54 @@ class GazeboCarEnv(gymnasium.Env):
         return float(reward)
 
     def _teleport_car(self, x, y, yaw):
-        req = SetEntityState.Request() # request object
-        req.state.name = 'vehicle_blue' # object identification
-        req.state.pose.position.x = float(x)
-        req.state.pose.position.y = float(y)
-        req.state.pose.position.z = 0.05 # a little bit over ground to avoid blocking
-        req.state.twist.linear.x = 0.0
-        req.state.twist.linear.y = 0.0
-        req.state.twist.angular.z = 0.0
-        req.state.pose.orientation = self._get_quaternion_from_yaw(yaw)
-        # check if service is available
-        if not self.set_state_client.wait_for_service(timeout_sec=2.0):
-             self.node.get_logger().error('[Error] Request service is not available.')
-        # send request and block superior fcn until request done
-        future = self.set_state_client.call_async(req)
-        rclpy.spin_until_future_complete(self.node, future, timeout_sec=2.0)
-        if future.result() is not None and future.result().success:
-            self.node.get_logger().info(f"[Event] Teleport successful to x={x:.2f}, y={y:.2f}, yaw={yaw:.2f}")
-        elif future.result() is not None:
-            self.node.get_logger().error(f"[Error] Teleport failed: {future.result().status_message}")
-        else:
-            self.node.get_logger().error("[Error] Teleport request timed out or failed to get result.")
+        q = self._get_quaternion_from_yaw(yaw)
+        req_content = (
+            f'name: "vehicle_blue", '
+            f'position: {{x: {x}, y: {y}, z: 0.05}}, '
+            f'orientation: {{x: {q.x}, y: {q.y}, z: {q.z}, w: {q.w}}}'
+        )
+
+        command = [
+            'gz', 'service',
+            '-s', '/world/mecanum_drive/set_pose',
+            '--reqtype', 'gz.msgs.Pose',
+            '--reptype', 'gz.msgs.Boolean',
+            '--timeout', '2000',
+            '--req', req_content
+        ]
+
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, check=True)
+            if "data: true" in result.stdout:
+                self.node.get_logger().info(f"[Event] Teleport succes: x={x:.2f}, y={y:.2f}")
+                # self._send_cmd(0.0, 0.0)
+            else:
+                self.node.get_logger().warn(f"[Error] Teleport executed but return false: {result.stdout}")
+
+        except subprocess.CalledProcessError as e:
+            self.node.get_logger().error(f"[Error] Teleport failed: {e.stderr}")
+
+        # req = SetEntityPose.Request() # request object
+        # req.state.name = 'vehicle_blue' # object identification
+        # req.state.pose.position.x = float(x)
+        # req.state.pose.position.y = float(y)
+        # req.state.pose.position.z = 0.05 # a little bit over ground to avoid blocking
+        # req.state.twist.linear.x = 0.0
+        # req.state.twist.linear.y = 0.0
+        # req.state.twist.angular.z = 0.0
+        # req.state.pose.orientation = self._get_quaternion_from_yaw(yaw)
+        # # check if service is available
+        # if not self.set_state_client.wait_for_service(timeout_sec=2.0):
+        #      self.node.get_logger().error('[Error] Request service is not available.')
+        # # send request and block superior fcn until request done
+        # future = self.set_state_client.call_async(req)
+        # rclpy.spin_until_future_complete(self.node, future, timeout_sec=2.0)
+        # if future.result() is not None and future.result().success:
+        #     self.node.get_logger().info(f"[Event] Teleport successful to x={x:.2f}, y={y:.2f}, yaw={yaw:.2f}")
+        # elif future.result() is not None:
+        #     self.node.get_logger().error(f"[Error] Teleport failed: {future.result().status_message}")
+        # else:
+        #     self.node.get_logger().error("[Error] Teleport request timed out or failed to get result.")
 
 
     def _get_quaternion_from_yaw(self, yaw):
