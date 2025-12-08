@@ -248,7 +248,7 @@ class GazeboCarEnv(gymnasium.Env):
             self.node.get_logger().warn(f"> Episode in progres...") 
         self.step_count += 1
         # scale norm action (-1, 1) to action boundaries
-        v_norm = float(np.clip(action[0], -1.0, 1.0))
+        v_norm = float(np.clip(action[0], 0.0, 1.0))
         w_norm = float(np.clip(action[1], -1.0, 1.0))
 
         v = v_norm * self.max_lin
@@ -383,7 +383,7 @@ class GazeboCarEnv(gymnasium.Env):
 
         self.rewards_components_sum += self.rewards_components
 
-        return reward
+        return float(reward)
 
     def _teleport_car(self, x, y, yaw):
         req = SetEntityState.Request() # request object
@@ -407,6 +407,7 @@ class GazeboCarEnv(gymnasium.Env):
             self.node.get_logger().error(f"[Error] Teleport failed: {future.result().status_message}")
         else:
             self.node.get_logger().error("[Error] Teleport request timed out or failed to get result.")
+
 
     def _get_quaternion_from_yaw(self, yaw):
         q = Quaternion()
