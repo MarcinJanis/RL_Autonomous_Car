@@ -20,6 +20,10 @@ from geometry_msgs.msg import Quaternion
 
 import trajectory_gt as gt
 
+from rclpy.qos import qos_profile_sensor_data
+
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
+
 class GazeboCarEnv(gymnasium.Env):
 
     def __init__(self, rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float):
@@ -82,14 +86,14 @@ class GazeboCarEnv(gymnasium.Env):
             LaserScan,
             "/world/mecanum_drive/model/vehicle_blue/link/lidar_link/sensor/lidar/scan",
             self._lidar_cb,
-            10
+            qos_profile_sensor_data
         )
 
         self.pose_sub = self.node.create_subscription(
             Odometry, 
             "/model/vehicle_blue/odometry",
             self._global_pose_cb,
-            10
+            qos_profile_sensor_data
         )
 
         # self.vel_sub = self.node.create_subscription(
@@ -103,12 +107,18 @@ class GazeboCarEnv(gymnasium.Env):
             Contacts,
             "/world/mecanum_drive/model/track_model/link/track_link/sensor/walls_contact_sensor/contact",
             self._collision_cb,
-            10
+            qos_profile_sensor_data
         )
 
 
         # --- Ros2 Publisher --- 
-        self.cmd_pub = self.node.create_publisher(Twist, "/cmd_vel", 10)
+        cmd_qos_profile = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE, # Zgodny z domyślnym
+            durability=DurabilityPolicy.VOLATILE,
+            depth=10
+        )
+
+        self.cmd_pub = self.node.create_publisher(Twist, "/cmd_vel", cmd_qos_profile)
 
         # --- Gym spaces ---
 
