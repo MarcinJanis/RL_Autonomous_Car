@@ -255,14 +255,14 @@
           </surface>
         </collision>
     
-        <sensor name='walls_contact_sensor' type='contact'>
+        <!-- <sensor name='walls_contact_sensor' type='contact'>
           <always_on>true</always_on>
           <update_rate>50.0</update_rate>
           <contact>
             <collision>outer_walls_collision</collision> 
             <collision>inner_walls_collision</collision> 
           </contact>
-        </sensor>
+        </sensor> -->
     
       </link>
       <pose>0 0 0 0 0 0</pose>
@@ -349,7 +349,7 @@
             <specular>0 0 1 1</specular>
           </material>
         </visual>
-        <collision name='collision'>
+        <!-- <collision name='collision'>
           <geometry>
             <box>
               <size>2.01142 1 0.568726</size>
@@ -363,6 +363,42 @@
             <contact/>
           </surface>
         </collision>
+
+
+        <collision name='collision'>
+          </collision>
+
+        <sensor name='chassis_contact_sensor' type='contact'>
+          <always_on>true</always_on>
+          <update_rate>50.0</update_rate>
+          <contact>
+            <collision>collision</collision>
+          </contact>
+        </sensor> -->
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <!-- <size>2.01142 1 0.568726</size> -->
+               <!-- <size>1.01142 0.5 0.01</size> -->
+               <size>2.01142 1 0.01</size>
+            </box>
+          </geometry>
+            <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+
+        <sensor name='chassis_contact_sensor' type='contact'>
+          <always_on>true</always_on>
+            <update_rate>50.0</update_rate>
+          <contact>
+            <collision>collision</collision>
+          </contact>
+        </sensor>
 
         <enable_wind>false</enable_wind>
       </link>
