@@ -27,6 +27,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 TOTAL_STEPS = 1000000 # Total steps
 EVAL_STEPS = 10000 # Evaluation after this amount of steps
 MAX_STEPS_PER_EPISODE = 5000 # Steps per episoed (max)
+TIME_STEP = 0.1 # [s]
 
 rewards =  { 'velocity': 1, 'trajectory': -5, 'ang_vel': -0.1, 'collision': -15, 'timeout': -5, 'destin': 20 }
 # velocity - reward for velocity to motive car to explore
@@ -71,11 +72,12 @@ wandb_callback = WandbCallback(
 )
 
 # --- Init Environment ---
-env = gazebo_env(rewards = rewards, 
-                trajectory_points_pth = trajectory_goal, 
-                max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
-                max_lin_vel = max_linear_velocity,
-                max_ang_vel = max_angular_velocity)
+env = gazebo_env(time_step = TIME_STEP,
+                 rewards = rewards, 
+                 trajectory_points_pth = trajectory_goal, 
+                 max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
+                 max_lin_vel = max_linear_velocity,
+                 max_ang_vel = max_angular_velocity)
 
 # check compiliance
 
@@ -106,7 +108,8 @@ policy_kwargs = dict(
 )
 
 # Environment vectorization - for parallel training
-env_id = lambda: gazebo_env(rewards = rewards, 
+env_id = lambda: gazebo_env(time_step = TIME_STEP,
+                            rewards = rewards, 
                             trajectory_points_pth = trajectory_goal, 
                             max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
                             max_lin_vel = max_linear_velocity,

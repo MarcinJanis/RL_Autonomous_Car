@@ -3,7 +3,7 @@ from gymnasium import spaces
 import numpy as np
 import cv2
 import subprocess
-
+import time
 import os
 
 
@@ -29,7 +29,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 class GazeboCarEnv(gymnasium.Env):
 
-    def __init__(self, rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float):
+    def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float):
         super().__init__()
 
 
@@ -37,7 +37,8 @@ class GazeboCarEnv(gymnasium.Env):
         # Create subfolder for saving logs from training
         self.LOG_DIR = os.path.join(os.getcwd(), f'./training_logs')
         os.makedirs(name=self.LOG_DIR, exist_ok=True)
-       
+
+        self.time_step = time_step
         
 
         self.episode_count = 0
@@ -223,14 +224,14 @@ class GazeboCarEnv(gymnasium.Env):
         # stop robot
         self._send_cmd(0.0, 0.0)
         if self.episode_count > 0:
-            self.node.get_logger().warn(f"Episode {self.episode_count} finished with {self.step_count} steps.") 
-            self.node.get_logger().warn(f"Rewards: \
-                                        velocity: {self.rewards_components_sum[0]} \
-                                        trajectory: {self.rewards_components_sum[1]} \
-                                        ang_vel: {self.rewards_components_sum[2]} \
-                                        collision: {self.rewards_components_sum[3]} \
-                                        timeout: {self.rewards_components_sum[4]} \
-                                        destin: {self.rewards_components_sum[5]} ")
+            self.node.get_logger().warn(f"> Episode {self.episode_count} finished with {self.step_count} steps.") 
+            self.node.get_logger().warn(f"> Rewards: \n\
+                                        > velocity: {self.rewards_components_sum[0]} \n\
+                                        > trajectory: {self.rewards_components_sum[1]} \n\
+                                        > ang_vel: {self.rewards_components_sum[2]} \n\
+                                        > collision: {self.rewards_components_sum[3]} \n\
+                                        > timeout: {self.rewards_components_sum[4]} \n\
+                                        > destin: {self.rewards_components_sum[5]} ")
             self.rewards_components_sum = np.zeros((len(self.rewards)), dtype = np.float32)
 
         self.episode_count += 1
@@ -245,7 +246,7 @@ class GazeboCarEnv(gymnasium.Env):
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
         self.node.get_logger().warn(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
         self._teleport_car(x_st, y_st, yaw_st)
-        
+
         obs = self._get_obs_blocking()
         return obs, self.reset_info   
 
@@ -262,17 +263,13 @@ class GazeboCarEnv(gymnasium.Env):
 
         # perform action
         self._send_cmd(v, w)
-
-        # callbacks
-        rclpy.spin_once(self.node, timeout_sec=0.05)
-
-        # if self.laser is None:
-        #   self.node.get_logger().warn("[STEP] LIDAR: self.laser is None")
-        # else:
-        #   self.node.get_logger().info(
-        #       f"[STEP] LIDAR: {len(self.laser)} próbek, min={np.nanmin(self.laser):.2f}"
-        #   )
         
+        # wait for get response
+        start_time = time.time()
+        while time.time() - start_time < self.time_step:
+            rclpy.spin_once(self.node, timeout_sec=0.05)
+
+        # get obs  
         obs = self._get_obs()
         x, y = self.global_pose
         vx, vy, ang_vz = self.global_vel
