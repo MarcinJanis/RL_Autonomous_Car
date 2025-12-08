@@ -16,6 +16,10 @@ from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 
 from gazebo_msgs.srv import SetEntityState
+
+
+
+
 from geometry_msgs.msg import Quaternion
 
 import trajectory_gt as gt
@@ -407,6 +411,7 @@ class GazeboCarEnv(gymnasium.Env):
             self.node.get_logger().error(f"[Error] Teleport failed: {future.result().status_message}")
         else:
             self.node.get_logger().error("[Error] Teleport request timed out or failed to get result.")
+    
 
 
     def _get_quaternion_from_yaw(self, yaw):
