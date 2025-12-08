@@ -52,7 +52,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.camera_img = None
         self.laser = None
         self.global_pose = np.zeros((2), dtype = np.float32)
-        self.global_vel = np.zeros((2), dtype = np.float32)
+        self.global_vel = np.zeros((3), dtype = np.float32)
 
         self.odom_received = False
 
@@ -62,6 +62,8 @@ class GazeboCarEnv(gymnasium.Env):
 
         # --- rewards value ---
         self.rewards = rewards 
+        self.rewards_components = np.zeros((len(self.rewards)), dtype = np.float32)
+        self.rewards_components_sum = np.zeros((len(self.rewards)), dtype = np.float32)
         # shape like: { 'velocity': 1, 'trajectory': 5, 'collision': -15, 'timeout': -5, 'destin': 20}
 
         # init object for distance from trajectory calc
@@ -79,21 +81,21 @@ class GazeboCarEnv(gymnasium.Env):
             Image,
             "/world/mecanum_drive/model/vehicle_blue/link/camera_link/sensor/camera_sensor/image",
             self._camera_cb,
-            10
+            10  # qos_profile_sensor_data
         )
 
         self.lidar_sub = self.node.create_subscription(
             LaserScan,
             "/world/mecanum_drive/model/vehicle_blue/link/lidar_link/sensor/lidar/scan",
             self._lidar_cb,
-            qos_profile_sensor_data
+            10 # qos_profile_sensor_data
         )
 
         self.pose_sub = self.node.create_subscription(
             Odometry, 
             "/model/vehicle_blue/odometry",
             self._global_pose_cb,
-            qos_profile_sensor_data
+            10 # qos_profile_sensor_data
         )
 
         # self.vel_sub = self.node.create_subscription(
@@ -143,7 +145,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.laser_range = 12.0
         self.lidar_space = spaces.Box(
             low=0.0,
-            high=self.laser_range,
+            high=1.0,
             shape=(self.lidar_l,),
             dtype=np.float32
         )
@@ -179,7 +181,8 @@ class GazeboCarEnv(gymnasium.Env):
     def _lidar_cb(self, msg: LaserScan):
         try:
             self.laser = np.array(msg.ranges, dtype=np.float32)
-            self.laser = np.clip(self.laser, 0.0, self.laser_range)
+            self.laser = np.clip(self.laser, 0.0, self.laser_range) # clip 
+            self.laser = self.laser / self.laser_range
         except Exception as e:
             self.node.get_logger().warn(f"[Err] Cannot get data from lidaer:\n{e}")
        
@@ -192,7 +195,8 @@ class GazeboCarEnv(gymnasium.Env):
 
                 self.global_vel = np.array([
                     msg.twist.twist.linear.x,
-                    msg.twist.twist.linear.y
+                    msg.twist.twist.linear.y,
+                    msg.twist.twist.angular.z
                 ])
 
                 self.odom_received = True
@@ -214,9 +218,13 @@ class GazeboCarEnv(gymnasium.Env):
     # ------------- GYM API ------------- #
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
-
+        
         # stop robot
         self._send_cmd(0.0, 0.0)
+        if self.episode_count > 0:
+            self.node.get_logger().warn(f"[Log] Episode {self.episode_count} finished.") 
+            self.node.get_logger().warn(f"Rewards components sum:\n{self.rewards_components_sum}")
+            self.rewards_components_sum = np.zeros((len(self.rewards)), dtype = np.float32)
 
         self.episode_count += 1
         self.step_count = 0
@@ -227,6 +235,7 @@ class GazeboCarEnv(gymnasium.Env):
         # put on random posiition:
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
         self._teleport_car(x_st, y_st, yaw_st)
+        self.node.get_logger().warn(f"New episode strats from: {x_st}, {y_st}, {yaw_st}\n")
 
         obs = self._get_obs_blocking()
         return obs, self.reset_info   
@@ -256,7 +265,7 @@ class GazeboCarEnv(gymnasium.Env):
         
         obs = self._get_obs()
         x, y = self.global_pose
-        vx, vy = self.global_vel
+        vx, vy, ang_vz = self.global_vel
         self.trajectory.add2trajectory((x, y, vx, vy))
         self.destination_reached_flag  = self.trajectory.check_if_dest_reached(x, y, 
                                                                                fin_line_o = (-9.12, 14.61), 
@@ -293,6 +302,7 @@ class GazeboCarEnv(gymnasium.Env):
     def render(self):
         self.trajectory.visu_save(self.LOG_DIR, self.episode_count)
         self.trajectory.traj_save(self.LOG_DIR, self.episode_count)
+        self.node.get_logger().warn(f"[Visualisation rendered]")
 
     # ------------- POMOCNICZE ------------- #
     def _send_cmd(self, v, w):
@@ -308,7 +318,7 @@ class GazeboCarEnv(gymnasium.Env):
             self.camera_img  = np.zeros((self.img_h, self.img_w, 3), dtype=np.uint8)
         
         if self.laser is None:
-            self.laser = np.ones((self.lidar_l), dtype=np.float32) * 12.0
+            self.laser = np.ones((self.lidar_l), dtype=np.float32)
 
         return {"image": self.camera_img, "lidar": self.laser}
 
@@ -323,32 +333,51 @@ class GazeboCarEnv(gymnasium.Env):
 
 
     def _compute_reward(self, obs):
-        reward = 0 
+        # reward = 0 
+        
         # self.rewards = { 'velocity': 1, 'trajectory': -5, 'collision': -15, 'timeout': -5, 'destin': 20}
     
         # get data
         x, y = self.global_pose
-        vx, vy = self.global_vel
+        vx, vy, ang_vz = self.global_vel
 
         # 1 - reward for velocity
         v_xy = np.sqrt(vx*vx + vy*vy)
-        reward += v_xy * self.rewards['velocity']
-
+        # reward += v_xy * self.rewards['velocity']
+        self.rewards_components[0] = v_xy * self.rewards['velocity']
         # 2 - reward for distance from desire trajectory
         _, _, dist = self.trajectory.get_dist(x, y) # x_cp, y_cp - closet points on trajectory
-        reward += dist * self.rewards['trajectory'] 
-        
+        # reward += dist * self.rewards['trajectory'] 
+        self.rewards_components[1] = dist * self.rewards['trajectory'] 
         # 3 - reward for collision
+
+        self.rewards_components[2] = np.abs(ang_vz) * self.rewards['ang_vel'] 
+
         if self.collision_flag:
-            reward += self.rewards['collision']
+            self.rewards_components[3] = self.rewards['collision']
+            # reward += self.rewards['collision']
+            self.node.get_logger().warn(f"[Collision]")
+        else:
+            self.rewards_components[3] = 0.0
 
         # 4 - reward for timeout
         if self.timeout_flag:
-            reward += self.rewards['timeout']
+            self.rewards_components[4] = self.rewards['timeout']
+            # reward += self.rewards['timeout']
+        else:
+            self.rewards_components[4] = 0.0
 
         # 5 - check if destination reached:
         if self.destination_reached_flag:
-            reward += self.rewards['destin']
+            self.rewards_components[5] = self.rewards['destin']
+            # reward += self.rewards['destin']
+            self.node.get_logger().warn(f"[Destination reached]")
+        else:
+            self.rewards_components[5] = 0.0
+
+        reward = np.sum(self.rewards_components)
+
+        self.rewards_components_sum += self.rewards_components
 
         return reward
 
