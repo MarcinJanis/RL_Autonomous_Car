@@ -21,7 +21,7 @@ import wandb
 from wandb.integration.sb3 import WandbCallback
 
 # Parameters
-ENV_PARALLEL = 4 # How many envornment shall work parallel during training
+ENV_PARALLEL = 1 # How many envornment shall work parallel during training
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 TOTAL_STEPS = 1000000 # Total steps
 EVAL_STEPS = 10000 # Evaluation after this amount of steps
@@ -34,7 +34,7 @@ rewards =  { 'velocity': 1, 'trajectory': -5, 'collision': -15, 'timeout': -5, '
 # timeout - punishment for exceed max steps before reached goal
 # destin - reward for reach goal  
 
-trajectory_goal = 'models/walls/waypoints_il_srodek.csv'
+trajectory_goal = './models/walls/waypoints_il_srodek.csv'
 
 # boundaries for car
 max_linear_velocity = 3.0
@@ -87,7 +87,7 @@ print("Environment checked.")
 
 # --- Init model and policy config---
 
-encoder_check_point_pth = 'autonomous_vehicles/autonomous_vehicles/net_agent/best_weights.ckpt'
+encoder_check_point_pth = './autonomous_vehicles/net_agent/best_weights.ckpt'
 
 head_arch = dict(
     pi=[512, 64], # Policy head - action
