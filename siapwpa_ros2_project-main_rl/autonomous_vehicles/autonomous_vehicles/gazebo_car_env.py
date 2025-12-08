@@ -293,6 +293,7 @@ class GazeboCarEnv(gymnasium.Env):
     def render(self):
         self.trajectory.visu_save(self.LOG_DIR, self.episode_count)
         self.trajectory.traj_save(self.LOG_DIR, self.episode_count)
+        self.node.get_logger().warn(f"[Visualisation rendered]")
 
     # ------------- POMOCNICZE ------------- #
     def _send_cmd(self, v, w):
@@ -341,6 +342,7 @@ class GazeboCarEnv(gymnasium.Env):
         # 3 - reward for collision
         if self.collision_flag:
             reward += self.rewards['collision']
+            self.node.get_logger().warn(f"[Collision]")
 
         # 4 - reward for timeout
         if self.timeout_flag:
@@ -349,6 +351,7 @@ class GazeboCarEnv(gymnasium.Env):
         # 5 - check if destination reached:
         if self.destination_reached_flag:
             reward += self.rewards['destin']
+            self.node.get_logger().warn(f"[Destination reached]")
 
         return reward
 

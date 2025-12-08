@@ -34,6 +34,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         gz_sim_world,
-        gz_bridge,
-        rl_training_node
+        gz_bridge#,
+        # rl_training_node
     ])

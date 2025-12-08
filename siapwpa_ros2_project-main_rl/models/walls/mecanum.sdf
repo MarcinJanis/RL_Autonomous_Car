@@ -750,7 +750,7 @@
     </material>
   </visual>
 
-<sensor type="ray" name="lidar">
+<sensor type="gpu_ray" name="lidar">
   <ray>
     <scan>
       <horizontal> <samples>280</samples> <resolution>1</resolution> <min_angle>-1.099</min_angle> <max_angle>1.099</max_angle> </horizontal>
@@ -808,4 +808,3 @@
     </light>
   </world>
 </sdf>
-
