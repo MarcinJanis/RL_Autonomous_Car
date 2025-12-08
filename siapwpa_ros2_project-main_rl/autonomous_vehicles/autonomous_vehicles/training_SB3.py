@@ -21,7 +21,7 @@ import wandb
 from wandb.integration.sb3 import WandbCallback
 
 # Parameters
-ENV_PARALLEL = 4 # How many envornment shall work parallel during training
+ENV_PARALLEL = 1 # How many envornment shall work parallel during training
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 TOTAL_STEPS = 1000000 # Total steps
 EVAL_STEPS = 10000 # Evaluation after this amount of steps
