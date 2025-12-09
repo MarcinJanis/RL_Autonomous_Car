@@ -17,7 +17,9 @@ przykładowe warotści z jakiegoś przejazdu przy aktualnych wartościach kary
 > timeout: 0.0
 
 - zwiększyć znacznie karę za kolizję, lub dac sto razy mniejszą za trajektorię, z 15 - 20 razy mniejszą za prędkość kątową, i 100 razy mniejszą za pręsdkość liniwoą
-  
+
+
+3. Zatrzymać symulajcę po obserwacji i wznowić przed podjęciem akcji - tak jak teleportacja
 # Resolved 
 ___
 1. render() - symulacja zgłasza warning że nie podano render_mode = True, ale można to zignorować - zaimplementowałem funkcję tak że tego nie potrzebuje. Przyszłościowo można dać ten render_mode jako argument i nic z nim nie ribić żeby nie krzyczało 
