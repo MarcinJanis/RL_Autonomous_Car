@@ -29,6 +29,7 @@ TOTAL_STEPS = 1000000 # Total steps
 EVAL_STEPS = 10000 # Evaluation after this amount of steps
 MAX_STEPS_PER_EPISODE = 1800 # Steps per episoed (max)
 TIME_STEP = 0.1 # [s]
+SIM_SPEED = 4.0  # <- to samo co real_time_factor w mecanum.sdf
 
 rewards =  { 'velocity': 0.01, 'trajectory': -0.005, 'ang_vel': -0.01, 'collision': -15, 'timeout': -5, 'destin': 20 }
 # velocity - reward for velocity to motive car to explore
@@ -79,7 +80,8 @@ env = gazebo_env(time_step = TIME_STEP,
                  max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
                  max_lin_vel = max_linear_velocity,
                  max_ang_vel = max_angular_velocity,
-                 render_mode=True)
+                 render_mode=True,
+                 sim_speed=SIM_SPEED)
 
 # check compiliance
 
@@ -116,7 +118,8 @@ env_id = lambda: gazebo_env(time_step = TIME_STEP,
                             max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
                             max_lin_vel = max_linear_velocity,
                             max_ang_vel = max_angular_velocity,
-                            render_mode=True)
+                            render_mode=True,
+                            sim_speed=SIM_SPEED)
 
 # Evaluation callback
 

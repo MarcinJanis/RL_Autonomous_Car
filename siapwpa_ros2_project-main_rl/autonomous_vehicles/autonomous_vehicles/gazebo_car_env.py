@@ -29,7 +29,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 class GazeboCarEnv(gymnasium.Env):
 
-    def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float, render_mode = True):
+    def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float, render_mode = True, sim_speed: float = 1.0):
         super().__init__()
 
 
@@ -39,6 +39,7 @@ class GazeboCarEnv(gymnasium.Env):
         os.makedirs(name=self.LOG_DIR, exist_ok=True)
 
         self.time_step = time_step
+        self.sim_speed = sim_speed if sim_speed > 0.0 else 1.0  # ochronka na 0
         self.render_mode = True
 
         self.episode_count = 0
@@ -46,6 +47,11 @@ class GazeboCarEnv(gymnasium.Env):
         if not rclpy.ok(): rclpy.init(args=None)
 
         self.node = Node("gym_mecanum_env")
+
+        self.node.get_logger().warn(
+            f"[Env] time_step={self.time_step}s, sim_speed={self.sim_speed}x"
+        )
+
         # self.set_state_client = self.node.create_client(SetEntityState, '/gazebo/set_entity_state')
         self.set_state_client = self.node.create_client(SetEntityPose, '/world/mecanum_drive/set_pose')
         
@@ -273,8 +279,10 @@ class GazeboCarEnv(gymnasium.Env):
         self._send_cmd(v, w)
         
         # wait for get response
+        effective_wait = self.time_step / self.sim_speed
+
         start_time = time.time()
-        while time.time() - start_time < self.time_step:
+        while time.time() - start_time < effective_wait:
             rclpy.spin_once(self.node, timeout_sec=0.05)
 
         # get obs  
