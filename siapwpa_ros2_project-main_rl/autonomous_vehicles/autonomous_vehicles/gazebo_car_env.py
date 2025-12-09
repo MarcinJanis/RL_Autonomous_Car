@@ -359,7 +359,15 @@ class GazeboCarEnv(gymnasium.Env):
         self.rewards_components[1] = dist * self.rewards['trajectory'] 
         # 3 - reward for collision
 
-        self.rewards_components[2] = np.abs(ang_vz) * self.rewards['ang_vel'] 
+        # self.rewards_components[2] = np.abs(ang_vz) * self.rewards['ang_vel'] 
+
+        # test kary za kręcenie w kółku
+        sit_ratio = np.abs(ang_vz) / (v_xy+ 1e-3)
+        normalized_penalty = np.tanh(sit_ratio / 5.0)
+        self.rewards_components[2] = normalized_penalty * self.rewards['ang_vel']
+
+
+
 
         if self.collision_flag:
             self.rewards_components[3] = self.rewards['collision']

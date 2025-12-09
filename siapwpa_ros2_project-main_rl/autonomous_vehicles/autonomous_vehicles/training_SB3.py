@@ -26,10 +26,10 @@ ENV_PARALLEL = 1 # How many envornment shall work parallel during training
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 TOTAL_STEPS = 1000000 # Total steps
 EVAL_STEPS = 10000 # Evaluation after this amount of steps
-MAX_STEPS_PER_EPISODE = 5000 # Steps per episoed (max)
+MAX_STEPS_PER_EPISODE = 1800 # Steps per episoed (max)
 TIME_STEP = 0.1 # [s]
 
-rewards =  { 'velocity': 1, 'trajectory': -5, 'ang_vel': -0.1, 'collision': -15, 'timeout': -5, 'destin': 20 }
+rewards =  { 'velocity': 0.01, 'trajectory': -0.005, 'ang_vel': -0.01, 'collision': -15, 'timeout': -5, 'destin': 20 }
 # velocity - reward for velocity to motive car to explore
 # trajectory - punishment for distance from desired trajectory 
 # collision - punishment for collision
@@ -61,7 +61,7 @@ run = wandb.init(
     sync_tensorboard=True,
     monitor_gym=False,
     save_code=False,
-    mode='offline'
+    mode='online'
 )
 
 wandb_callback = WandbCallback(
