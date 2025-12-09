@@ -13,7 +13,7 @@ ___
 - używajac funkcji z `trajectory_gt.py` rysuje gt i aktualną trajektorię w czasie rzeczywistym
 - może rejestruje przebieg w postaci filmiku (?)
 ___
-##3. Przyspieszenie treningu
+## 3. Przyspieszenie treningu
 
 W `mecanum.sdf` jest parametr `<real_time_factor>1</real_time_factor>`. Służy od określania prędkości symulacji.<br>
 Wartość **1** oznacza synchronizację z rzeczywistym zegarem czyli 1 s w symulacji odpowiada 1 s w rzeczywistości. <br>
