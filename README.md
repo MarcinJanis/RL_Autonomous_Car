@@ -1,10 +1,10 @@
 # TODO
 ___
-1. Przeprowadzić wstępny trening
+## 1. Przeprowadzić wstępny trening
 - zapisać gdzieś wszystkie wyniki (csv i png) stworzone przez funkcję render() (chyba w fodlerze `training_logs` czy coś takiego)
 - zapisać gdzieś najlepszy model
-
-2. Napisać funkcję (nowy plik i w nowym folderze, zeby nie było to razem z programami do nauki):
+___
+## 2. Napisać funkcję (nowy plik i w nowym folderze, zeby nie było to razem z programami do nauki):
 - wczytuje model i wagi
 - tworzy publishera na temacie /cmd_vel
 - tworzy subscribera na tematach do kamery i lidaru
@@ -12,8 +12,8 @@ ___
 - zapisuje gdzieś logi, dane to ewaluacji
 - używajac funkcji z `trajectory_gt.py` rysuje gt i aktualną trajektorię w czasie rzeczywistym
 - może rejestruje przebieg w postaci filmiku (?)
-  
-3. Przyspieszenie treningu
+___
+##3. Przyspieszenie treningu
 
 W `mecanum.sdf` jest parametr `<real_time_factor>1</real_time_factor>`. Służy od określania prędkości symulacji.<br>
 Wartość **1** oznacza synchronizację z rzeczywistym zegarem czyli 1 s w symulacji odpowiada 1 s w rzeczywistości. <br>
@@ -28,9 +28,4 @@ Wartość **0** oznacza symulajcę z największą prędkością - brak kontroli 
 - przebadać jakie największe przyspieszenie można dać żeby sie wszystko nie wywaliło 
   
 
-
-3. Zatrzymać symulajcę po obserwacji i wznowić przed podjęciem akcji - tak jak teleportacja
-# Resolved 
-___
-1. render() - symulacja zgłasza warning że nie podano render_mode = True, ale można to zignorować - zaimplementowałem funkcję tak że tego nie potrzebuje. Przyszłościowo można dać ten render_mode jako argument i nic z nim nie ribić żeby nie krzyczało 
 
