@@ -12,7 +12,8 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.env_util import make_vec_env
 
-from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.callbacks import EvalCallback, BaseCallback
+from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_util import make_vec_env
 
 import net_agent.net_v1 as agent
@@ -77,7 +78,8 @@ env = gazebo_env(time_step = TIME_STEP,
                  trajectory_points_pth = trajectory_goal, 
                  max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
                  max_lin_vel = max_linear_velocity,
-                 max_ang_vel = max_angular_velocity)
+                 max_ang_vel = max_angular_velocity,
+                 render_mode=True)
 
 # check compiliance
 
@@ -113,28 +115,112 @@ env_id = lambda: gazebo_env(time_step = TIME_STEP,
                             trajectory_points_pth = trajectory_goal, 
                             max_steps_per_episode = MAX_STEPS_PER_EPISODE, 
                             max_lin_vel = max_linear_velocity,
-                            max_ang_vel = max_angular_velocity)
+                            max_ang_vel = max_angular_velocity,
+                            render_mode=True)
+
+# Evaluation callback
+
+class EnvEvalCallback(BaseCallback):
+    def __init__(self, eval_freq: int, log_dir: str, verbose = 1):
+        super(EnvEvalCallback, self).__init__(verbose)
+        self.eval_freq = eval_freq
+        self.log_dir = log_dir
+        self.best_mean_reward = -float('inf')
+        self.eval_cntr = 0 
+
+    def _on_step(self) -> bool:
+        if self.n_calls % self.eval_freq == 0:
+            if  self.verbose > 0:
+                print('[Eval] Evaluation starting ...')
+                self.eval_cntr += 1
+            total_rewards = []
+            n_episodes = 3
+
+            for i in range(n_episodes):
+                done = False
+                episode_reward = 0.0
+                obs = self.training_env.reset() # reset env
+
+                while not done:
+                    action, _ = self.model.predict(obs, deterministic=True)
+                    obs, rewards, dones, infos = self.training_env.step(action)
+
+                    reward = rewards[0] if isinstance(rewards, (list, np.ndarray)) else rewards # pierwsze czy ostatnie
+                    done = dones[0] if isinstance(dones, (list, np.ndarray)) else dones
+
+                    episode_reward += reward
+
+                total_rewards.append(episode_reward)
+                try:
+                    single_env = self.training_env.envs[0].unwrapped
+                    single_env.render()
+                    print('[Eval] Render suceed.')
+                except Exception as e:
+                    print('[Error] Cant render ')
+
+            mean_reward = np.mean(total_rewards)
+            if self.verbose > 0:
+                print(f'[Eval] Statstic: ')
+                print(f'Mean reward: {mean_reward} +/- {np.std(total_rewards)}')
+                for k in range(n_episodes):
+                    print(f'Episode {k}: rewards: {total_rewards}')
+
+            if mean_reward > self.best_mean_reward:
+                self.best_mean_reward = mean_reward
+                name = f"best_model_e{self.eval_cntr}"
+                self.model.save(os.path.join(self.log_dir, name))
+
+                print(f'[Eval] New best model save: {os.path.join(self.log_dir, name)}')
+
+                
+            self.training_env.reset()
+        return True
+    
+
+
+    # mean_reward, std_reward = evaluate_policy( self.model,
+    #                                            self.training_env,
+    #                                            n_eval_episodes=1,    # Liczba przejazdów testowych (możesz zmienić)
+    #                                            deterministic=True,   # Testujemy bez losowego szumu (czysta wiedza sieci)
+    #                                            render=False          # Wyłączamy renderowanie, żeby nie blokować wątków
+    #                                             )
+
+
 
 vec_env = make_vec_env(env_id, n_envs=ENV_PARALLEL)
 # -> Faster trainging (GPU waits until simulation ennds on CPU, its better to use all of available CPU threads 
 # -> More stable training (when model learns based on one simulation, step t and t+1 are really similar. When more simulation are used during one learning step, data are more diverse, this leads to better problem generalisation).
 
 # Additional env for evauation and callbacks
-eval_env = make_vec_env(env_id, n_envs=1)
+# eval_env = make_vec_env(env_id, n_envs=1)
+models_dir = './models'
+os.makedirs('./models', exist_ok=True)
+os.makedirs('./logs', exist_ok=True)
 
-os.makedirs(os.path.dirname('./models'), exist_ok=True)
-os.makedirs(os.path.dirname('./logs'), exist_ok=True)
-
-eval_callback = EvalCallback(
-    eval_env,
-    best_model_save_path='./models', # Dir with best models 
-    log_path='./logs',
-    eval_freq=EVAL_STEPS, # Evaluation with each
-    deterministic=True, # True to block exploration, only actions with highest prop    
-    render=True, # To visualize best trajectory (methods implemented in enronment: render() and close().
-    callback_on_new_best=None, # Call back when new best model, if None, default option: save best model      
-    verbose=2      
+eval_callback = EnvEvalCallback(
+    eval_freq=EVAL_STEPS,       
+    log_dir=models_dir,   
+    verbose=1
 )
+
+
+
+
+
+# eval_callback = EvalCallback(
+#     eval_env,
+#     best_model_save_path='./models', # Dir with best models 
+#     log_path='./logs',
+#     eval_freq=EVAL_STEPS, # Evaluation with each
+#     deterministic=True, # True to block exploration, only actions with highest prop    
+#     render=True, # To visualize best trajectory (methods implemented in enronment: render() and close().
+#     callback_on_new_best=None, # Call back when new best model, if None, default option: save best model      
+#     verbose=2      
+# )
+
+
+
+
 
 # Agent initialisation
 model = PPO(
@@ -150,6 +236,9 @@ model = PPO(
     device=DEVICE,
     tensorboard_log=f"runs/{run.id}",
 )
+
+
+
 
 # Final Architecture visualization
 print("--- Print architecture ---")

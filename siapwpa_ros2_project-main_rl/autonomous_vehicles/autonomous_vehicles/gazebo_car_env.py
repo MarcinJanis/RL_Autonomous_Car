@@ -29,7 +29,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 class GazeboCarEnv(gymnasium.Env):
 
-    def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float):
+    def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float, render_mode = True):
         super().__init__()
 
 
@@ -39,7 +39,7 @@ class GazeboCarEnv(gymnasium.Env):
         os.makedirs(name=self.LOG_DIR, exist_ok=True)
 
         self.time_step = time_step
-        
+        self.render_mode = True
 
         self.episode_count = 0
         # --- ROS2 node init ---
@@ -129,6 +129,7 @@ class GazeboCarEnv(gymnasium.Env):
         # --- Gym spaces ---
 
         # action (norm) shape: [-1,1]x[-1,1]
+
         self.action_space = spaces.Box(
             low=np.array([-1.0, -1.0], dtype=np.float32),
             high=np.array([1.0, 1.0], dtype=np.float32),
@@ -223,6 +224,7 @@ class GazeboCarEnv(gymnasium.Env):
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
         # stop robot
+        self._start_gz()
         self._send_cmd(0.0, 0.0)
         if self.episode_count > 0:
             self.node.get_logger().warn(f"> Episode {self.episode_count} finished with {self.step_count} steps.") 
@@ -249,6 +251,10 @@ class GazeboCarEnv(gymnasium.Env):
         self._teleport_car(x_st, y_st, yaw_st)
 
         obs = self._get_obs_blocking()
+        self._stop_gz()
+
+        rclpy.spin_once(self.node, timeout_sec=0.01)
+        
         return obs, self.reset_info   
 
     def step(self, action):
@@ -256,6 +262,7 @@ class GazeboCarEnv(gymnasium.Env):
             self.node.get_logger().warn(f"> Episode in progres...") 
         self.step_count += 1
         # scale norm action (-1, 1) to action boundaries
+        self._start_gz()
         v_norm = float(np.clip(action[0], 0.0, 1.0))
         w_norm = float(np.clip(action[1], -1.0, 1.0))
 
@@ -272,6 +279,8 @@ class GazeboCarEnv(gymnasium.Env):
 
         # get obs  
         obs = self._get_obs()
+        self._stop_gz()
+
         x, y = self.global_pose
         vx, vy, ang_vz = self.global_vel
         self.trajectory.add2trajectory((x, y, vx, vy))
@@ -310,7 +319,7 @@ class GazeboCarEnv(gymnasium.Env):
     def render(self):
         self.trajectory.visu_save(self.LOG_DIR, self.episode_count)
         self.trajectory.traj_save(self.LOG_DIR, self.episode_count)
-        self.node.get_logger().warn(f"[Visualisation rendered]")
+        self.node.get_logger().warn(f"[Visualisation render finished.]")
 
     # ------------- POMOCNICZE ------------- #
     def _send_cmd(self, v, w):
@@ -416,6 +425,39 @@ class GazeboCarEnv(gymnasium.Env):
 
         except subprocess.CalledProcessError as e:
             self.node.get_logger().error(f"[Error] Teleport failed: {e.stderr}")
+
+
+    def _stop_gz(self):
+        req_content = 'pause: true'
+        command = [
+            'gz', 'service',
+            '-s', '/world/mecanum_drive/control',
+            '--reqtype', 'gz.msgs.WorldControl',
+            '--reptype', 'gz.msgs.Boolean',
+            '--timeout', '2000',
+            '--req', req_content
+        ]
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, check=True)
+        except subprocess.CalledProcessError as e:
+            self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
+
+    def _start_gz(self):
+        req_content = 'pause: false'
+        command = [
+            'gz', 'service',
+            '-s', '/world/mecanum_drive/control',
+            '--reqtype', 'gz.msgs.WorldControl',
+            '--reptype', 'gz.msgs.Boolean',
+            '--timeout', '2000',
+            '--req', req_content
+        ]
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, check=True)
+        except subprocess.CalledProcessError as e:
+            self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
+            
+
 
         # req = SetEntityPose.Request() # request object
         # req.state.name = 'vehicle_blue' # object identification
