@@ -50,7 +50,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.node = Node("gym_mecanum_env")
         # self.set_state_client = self.node.create_client(SetEntityState, '/gazebo/set_entity_state')
         self.set_state_client = self.node.create_client(SetEntityPose, '/world/mecanum_drive/set_pose')
-
+        
 
         # --- bridge for camera and lidar ---
         self.bridge = CvBridge()
@@ -69,7 +69,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.destination_reached_flag = False
 
         # --- rewards value ---
-        self.rewards = rewards
+        self.rewards = rewards 
         self.rewards_components = np.zeros((len(self.rewards)), dtype = np.float32)
         self.rewards_components_sum = np.zeros((len(self.rewards)), dtype = np.float32)
         # shape like: { 'velocity': 1, 'trajectory': 5, 'collision': -15, 'timeout': -5, 'destin': 20}
@@ -99,7 +99,7 @@ class GazeboCarEnv(gymnasium.Env):
         )
 
         self.pose_sub = self.node.create_subscription(
-            Odometry,
+            Odometry, 
             "/model/vehicle_blue/odometry",
             self._global_pose_cb,
             10 # qos_profile_sensor_data
@@ -121,7 +121,7 @@ class GazeboCarEnv(gymnasium.Env):
         )
 
 
-        # --- Ros2 Publisher ---
+        # --- Ros2 Publisher --- 
         cmd_qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE, # Zgodny z domyślnym
             durability=DurabilityPolicy.VOLATILE,
@@ -177,11 +177,11 @@ class GazeboCarEnv(gymnasium.Env):
 
 
 
-    # --- Ros2 Callbacks ---
+    # --- Ros2 Callbacks --- 
     def _camera_cb(self, msg: Image):
         try:
             img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-            # img = cv2.resize(img, (self.img_w, self.img_h)) # Images shall be already resized
+            # img = cv2.resize(img, (self.img_w, self.img_h)) # Images shall be already resized 
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             self.camera_img = img
         except Exception as e:
@@ -190,11 +190,11 @@ class GazeboCarEnv(gymnasium.Env):
     def _lidar_cb(self, msg: LaserScan):
         try:
             self.laser = np.array(msg.ranges, dtype=np.float32)
-            self.laser = np.clip(self.laser, 0.0, self.laser_range) # clip
+            self.laser = np.clip(self.laser, 0.0, self.laser_range) # clip 
             self.laser = self.laser / self.laser_range
         except Exception as e:
             self.node.get_logger().info(f"[Err] Cannot get data from lidaer:\n{e}")
-
+       
     def _global_pose_cb(self, msg: Odometry):
         try:
                 self.global_pose = np.array([
@@ -213,15 +213,17 @@ class GazeboCarEnv(gymnasium.Env):
             self.node.get_logger().info(f"[Err] Cannot get data from odometry:\n{e}")
 
     # def _global_vel_cb(self, msg: Twist):
-    #         try:
+    #         try: 
     #             self.global_vel = np.array((msg.linear.x, msg.linear.y))
-    #         except Exception as e:
+    #         except Exception as e: 
     #             self.node.get_logger().info(f"[Err] Cannot get data from twist:\n{e}")
 
     def _collision_cb(self, msg: Contacts):
+        for c in msg.contacts:
+            self.node.get_logger().info(f"Contact: {c.collision1} and {c.collision2}")
         if len(msg.contacts) > 0 and self.step_count > 3:
             self.collision_flag = True
-        else:
+        else: 
             self.collision_flag = False
 
     # ------------- GYM API ------------- #
@@ -229,23 +231,21 @@ class GazeboCarEnv(gymnasium.Env):
         super().reset(seed=seed)
 
         # stop robot
-        self._start_gz()
+        # self._start_gz()
         self._send_cmd(0.0, 0.0)
         if self.episode_count > 0:
-            self.node.get_logger().info(f"> Episode {self.episode_count} finished with {self.step_count} steps.")
-            self.node.get_logger().info(f"> Mean step time: {self.temp_time_step_mean/self.step_count}") # usunąć
-            self.node.get_logger().info(f"> Mean calculation time: {self.temp_time_calc_mean/self.step_count}") # usunąć
-            self.temp_time_step_mean = 0
-            self.temp_time_calc_mean = 0
-
+            self.node.get_logger().info(f"> Episode {self.episode_count} finished with {self.step_count} steps.") 
+            self.node.get_logger().info(f"> Mean step time: {self.temp_time_step_mean/(self.step_count+1)}") # usunąć 
+            self.node.get_logger().info(f"> Mean calc per step time: {self.temp_time_calc_mean/(self.step_count+1)}") # usunąć 
+            self.temp_time_step_mean = 0 
+            self.temp_time_calc_mean = 0 
             self.node.get_logger().info(f"> Rewards: \n\
-                                          > velocity: {self.rewards_components_sum[0]} \n\
-                                          > trajectory: {self.rewards_components_sum[1]} \n\
-                                          > progress: {self.rewards_components_sum[2]} \n\
-                                          > collision: {self.rewards_components_sum[3]} \n\
-                                          > timeout: {self.rewards_components_sum[4]} \n\
-                                          > destin: {self.rewards_components_sum[5]} ")
-
+                                        > velocity: {self.rewards_components_sum[0]} \n\
+                                        > trajectory: {self.rewards_components_sum[1]} \n\
+                                        > progress: {self.rewards_components_sum[2]} \n\
+                                        > collision: {self.rewards_components_sum[3]} \n\
+                                        > timeout: {self.rewards_components_sum[4]} \n\
+                                        > destin: {self.rewards_components_sum[5]} ")
             self.rewards_components_sum = np.zeros((len(self.rewards)), dtype = np.float32)
 
         self.episode_count += 1
@@ -253,7 +253,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.collision_flag = False
         self.timeout_flag = False
 
-        self.node.get_logger().info(f"[Episode|{self.episode_count}] Episode start")
+        self.node.get_logger().info(f"[Episode|{self.episode_count}] Episode start") 
 
 
         self.last_episode_traj = self.trajectory.get_trajectory()
@@ -263,16 +263,16 @@ class GazeboCarEnv(gymnasium.Env):
 
         # put on random posiition:
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
-        self.node.get_logger().info(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}")
+        self.node.get_logger().info(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
         self._teleport_car(x_st, y_st, yaw_st)
 
         obs = self._get_obs_blocking()
-        self._stop_gz()
+        # self._stop_gz()
 
         self.t2 = time.time()
         rclpy.spin_once(self.node, timeout_sec=0.01)
-
-        return obs, self.reset_info
+        
+        return obs, self.reset_info   
 
     def step(self, action):
 
@@ -280,10 +280,10 @@ class GazeboCarEnv(gymnasium.Env):
 
         t1 = time.time() # usunąć
         if self.step_count == 0:
-            self.node.get_logger().info(f"> Episode in progres...")
+            self.node.get_logger().info(f"> Episode in progres...") 
         self.step_count += 1
         # scale norm action (-1, 1) to action boundaries
-        self._start_gz()
+        # self._start_gz()
         v_norm = float(np.clip(action[0], 0.0, 1.0))
         w_norm = float(np.clip(action[1], -1.0, 1.0))
 
@@ -292,22 +292,22 @@ class GazeboCarEnv(gymnasium.Env):
 
         # perform action
         self._send_cmd(v, w)
-
+        
         # wait for get response
         start_time = time.time()
         while time.time() - start_time < self.time_step:
             rclpy.spin_once(self.node, timeout_sec=0.05)
 
-        # get obs
+        # get obs  
         obs = self._get_obs()
-        self._stop_gz()
+        # self._stop_gz()
 
         x, y = self.global_pose
         vx, vy, ang_vz = self.global_vel
         self.trajectory.add2trajectory((x, y, vx, vy))
-        self.destination_reached_flag  = self.trajectory.check_if_dest_reached(x, y,
-                                                                               fin_line_o = (-9.12, 14.61),
-                                                                               fin_line_i = (-4.4, 14.61),
+        self.destination_reached_flag  = self.trajectory.check_if_dest_reached(x, y, 
+                                                                               fin_line_o = (-9.12, 14.61), 
+                                                                               fin_line_i = (-4.4, 14.61), 
                                                                                y_offset = 0.5)
 
         reward = self._compute_reward(obs)
@@ -321,33 +321,33 @@ class GazeboCarEnv(gymnasium.Env):
             terminated = True
 
         # if max steps reached -> terminated
-        if self.step_count >= self.max_steps - 1:
+        if self.step_count >= self.max_steps: 
             self.timeout_flag = True
             truncated = True
 
-        # if collision detected -> terminated
+        # if collision detected -> terminated 
         if self.collision_flag: terminated = True
 
         # Terminated more important than truncated
-        if terminated: truncated = False
+        if terminated: truncated = False 
 
-        # log info
+        # log info 
         info = {}
         self.t2 = time.time() # usunąć
         self.temp_time_step_mean += self.t2 - t1 # usunąć
-
+        
         return obs, reward, terminated, truncated, info
 
 
     def render(self):
         self.trajectory.visu_save(
-            self.LOG_DIR,
-            self.episode_count,
+            self.LOG_DIR, 
+            self.episode_count, 
             trajectory_override=self.last_episode_traj
         )
         self.trajectory.traj_save(
-            self.LOG_DIR,
-            self.episode_count,
+            self.LOG_DIR, 
+            self.episode_count, 
             trajectory_override=self.last_episode_traj,
             velocity_override=self.last_episode_vel
         )
@@ -365,13 +365,13 @@ class GazeboCarEnv(gymnasium.Env):
 
         if self.camera_img is None:
             self.camera_img  = np.zeros((self.img_h, self.img_w, 3), dtype=np.uint8)
-
+        
         if self.laser is None:
             self.laser = np.ones((self.lidar_l), dtype=np.float32)
 
         return {"image": self.camera_img, "lidar": self.laser}
 
-
+ 
     def _get_obs_blocking(self, timeout=2.0):
         waited = 0.0
         dt = 0.05
@@ -382,10 +382,10 @@ class GazeboCarEnv(gymnasium.Env):
 
 
     def _compute_reward(self, obs):
-        # reward = 0
-
+        # reward = 0 
+        
         # self.rewards = { 'velocity': 1, 'trajectory': -5, 'collision': -15, 'timeout': -5, 'destin': 20}
-
+    
         # get data
         x, y = self.global_pose
         vx, vy, ang_vz = self.global_vel
@@ -396,11 +396,11 @@ class GazeboCarEnv(gymnasium.Env):
         self.rewards_components[0] = v_xy * self.rewards['velocity']
         # 2 - reward for distance from desire trajectory
         _, _, dist, prog = self.trajectory.get_stats(x, y) # x_cp, y_cp - closet points on trajectory
-        # reward += dist * self.rewards['trajectory']
-        self.rewards_components[1] = dist * self.rewards['trajectory']
+        # reward += dist * self.rewards['trajectory'] 
+        self.rewards_components[1] = dist * self.rewards['trajectory'] 
         # 3 - reward for collision
 
-        # self.rewards_components[2] = np.abs(ang_vz) * self.rewards['ang_vel']
+        # self.rewards_components[2] = np.abs(ang_vz) * self.rewards['ang_vel'] 
 
         # test kary za kręcenie w kółku
         # sit_ratio = np.abs(ang_vz) / (v_xy+ 1e-3)
@@ -441,7 +441,7 @@ class GazeboCarEnv(gymnasium.Env):
         q = self._get_quaternion_from_yaw(yaw)
         req_content = (
             f'name: "vehicle_blue", '
-            f'position: {{x: {x}, y: {y}, z: 0.05}}, '
+            f'position: {{x: {x}, y: {y}, z: 0.35}}, '
             f'orientation: {{x: {q.x}, y: {q.y}, z: {q.z}, w: {q.w}}}'
         )
 
@@ -467,19 +467,19 @@ class GazeboCarEnv(gymnasium.Env):
 
 
     def _stop_gz(self):
-
+       
         try:
             os.system("gz service -s /world/mecanum_drive/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 3000 --req 'pause: true'")
         except Exception as e:
             self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
 
     def _start_gz(self):
-
+        
         try:
            os.system("gz service -s /world/mecanum_drive/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 3000 --req 'pause: false'")
         except Exception as e:
             self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
-
+            
 
     def _get_quaternion_from_yaw(self, yaw):
         q = Quaternion()
@@ -488,9 +488,10 @@ class GazeboCarEnv(gymnasium.Env):
         q.z = np.sin(yaw / 2.0)
         q.w = np.cos(yaw / 2.0)
         return q
-
+        
     def close(self):
         self._send_cmd(0.0, 0.0)
         self.node.destroy_node()
         rclpy.shutdown()
+
 
