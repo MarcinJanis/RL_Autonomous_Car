@@ -62,7 +62,7 @@ run = wandb.init(
     sync_tensorboard=True,
     monitor_gym=False,
     save_code=False,
-    mode='online'
+    mode='offline'
 )
 
 wandb_callback = WandbCallback(

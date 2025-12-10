@@ -207,7 +207,7 @@
           <intensity>1.0</intensity>
         </light>
         
-        <collision name="road_collision">
+        <!-- <collision name="road_collision">
           <geometry>
             <mesh>
               <uri>meshes/model.dae</uri>
@@ -221,7 +221,7 @@
               <collide_bitmask>0x01</collide_bitmask>
             </contact>
           </surface>
-        </collision>
+        </collision> -->
 
         <collision name="outer_walls_collision">
           <geometry>

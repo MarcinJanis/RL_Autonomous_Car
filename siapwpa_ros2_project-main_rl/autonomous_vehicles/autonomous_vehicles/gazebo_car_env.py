@@ -219,6 +219,8 @@ class GazeboCarEnv(gymnasium.Env):
     #             self.node.get_logger().info(f"[Err] Cannot get data from twist:\n{e}")
 
     def _collision_cb(self, msg: Contacts):
+        for c in msg.contacts:
+            self.node.get_logger().info(f"Contact: {c.collision1} and {c.collision2}")
         if len(msg.contacts) > 0:
             self.collision_flag = True
         else: 
@@ -439,7 +441,7 @@ class GazeboCarEnv(gymnasium.Env):
         q = self._get_quaternion_from_yaw(yaw)
         req_content = (
             f'name: "vehicle_blue", '
-            f'position: {{x: {x}, y: {y}, z: 0.05}}, '
+            f'position: {{x: {x}, y: {y}, z: 0.35}}, '
             f'orientation: {{x: {q.x}, y: {q.y}, z: {q.z}, w: {q.w}}}'
         )
 
