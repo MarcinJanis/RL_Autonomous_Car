@@ -30,7 +30,7 @@ EVAL_STEPS = 10000 # Evaluation after this amount of steps
 MAX_STEPS_PER_EPISODE = 1800 # Steps per episoed (max)
 TIME_STEP = 0.1 # [s]
 
-rewards =  { 'velocity': 0.01, 'trajectory': -0.005, 'ang_vel': -0.01, 'collision': -15, 'timeout': -5, 'destin': 20 }
+rewards =  { 'velocity': 0.01, 'trajectory': -0.001, 'prog': 0.004, 'collision': -15, 'timeout': -5, 'destin': 20 }
 # velocity - reward for velocity to motive car to explore
 # trajectory - punishment for distance from desired trajectory 
 # collision - punishment for collision
