@@ -34,7 +34,7 @@ class GazeboCarEnv(gymnasium.Env):
 
         self.temp_time_step_mean = 0 # usunąć
         self.temp_time_calc_mean = 0 # usunąć
-        self.t2 = 0 
+        self.t2 = 0 # usunąć
         # --- General inits ---
         # Create subfolder for saving logs from training
         self.LOG_DIR = os.path.join(os.getcwd(), f'./training_logs')
@@ -78,6 +78,8 @@ class GazeboCarEnv(gymnasium.Env):
         self.trajectory = gt.traj_gt()
         self.trajectory.setup(trajectory_points_pth, n=100)
 
+        self.last_episode_traj = None
+        self.last_episode_vel = None
         # --- info ---
         self.reset_info = {}
 
@@ -225,6 +227,7 @@ class GazeboCarEnv(gymnasium.Env):
     # ------------- GYM API ------------- #
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
+
         # stop robot
         # self._start_gz()
         self._send_cmd(0.0, 0.0)
@@ -250,7 +253,12 @@ class GazeboCarEnv(gymnasium.Env):
 
         self.node.get_logger().info(f"[Episode|{self.episode_count}] Episode start") 
 
+
+        self.last_episode_traj = self.trajectory.get_trajectory()
+        self.last_episode_vel = self.trajectory.get_velocity()
+
         self.trajectory.visu_reset()
+
         # put on random posiition:
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
         self.node.get_logger().info(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
@@ -259,12 +267,15 @@ class GazeboCarEnv(gymnasium.Env):
         obs = self._get_obs_blocking()
         # self._stop_gz()
 
+        self.t2 = time.time()
         rclpy.spin_once(self.node, timeout_sec=0.01)
         
         return obs, self.reset_info   
 
     def step(self, action):
-        self.temp_time_calc_mean +=  time.time() - self.t2
+
+        self.temp_time_calc_mean +=  time.time() - self.t2 # usunąć
+
         t1 = time.time() # usunąć
         if self.step_count == 0:
             self.node.get_logger().info(f"> Episode in progres...") 
@@ -320,15 +331,24 @@ class GazeboCarEnv(gymnasium.Env):
 
         # log info 
         info = {}
-        self.t2 = time.time()
+        self.t2 = time.time() # usunąć
         self.temp_time_step_mean += self.t2 - t1 # usunąć
         
         return obs, reward, terminated, truncated, info
 
 
     def render(self):
-        self.trajectory.visu_save(self.LOG_DIR, self.episode_count)
-        self.trajectory.traj_save(self.LOG_DIR, self.episode_count)
+        self.trajectory.visu_save(
+            self.LOG_DIR, 
+            self.episode_count, 
+            trajectory_override=self.last_episode_traj
+        )
+        self.trajectory.traj_save(
+            self.LOG_DIR, 
+            self.episode_count, 
+            trajectory_override=self.last_episode_traj,
+            velocity_override=self.last_episode_vel
+        )
         self.node.get_logger().info(f"[Visualisation render finished.]")
 
     # ------------- POMOCNICZE ------------- #
@@ -373,7 +393,7 @@ class GazeboCarEnv(gymnasium.Env):
         # reward += v_xy * self.rewards['velocity']
         self.rewards_components[0] = v_xy * self.rewards['velocity']
         # 2 - reward for distance from desire trajectory
-        _, _, dist = self.trajectory.get_dist(x, y) # x_cp, y_cp - closet points on trajectory
+        _, _, dist, prog = self.trajectory.get_dist(x, y) # x_cp, y_cp - closet points on trajectory
         # reward += dist * self.rewards['trajectory'] 
         self.rewards_components[1] = dist * self.rewards['trajectory'] 
         # 3 - reward for collision
@@ -381,12 +401,11 @@ class GazeboCarEnv(gymnasium.Env):
         # self.rewards_components[2] = np.abs(ang_vz) * self.rewards['ang_vel'] 
 
         # test kary za kręcenie w kółku
-        sit_ratio = np.abs(ang_vz) / (v_xy+ 1e-3)
-        normalized_penalty = np.tanh(sit_ratio / 5.0)
-        self.rewards_components[2] = normalized_penalty * self.rewards['ang_vel']
+        # sit_ratio = np.abs(ang_vz) / (v_xy+ 1e-3)
+        # normalized_penalty = np.tanh(sit_ratio / 5.0)
+        # self.rewards_components[2] = normalized_penalty * self.rewards['ang_vel']
 
-
-
+        self.rewards_components[2] = prog * self.rewards['prog']
 
         if self.collision_flag:
             self.rewards_components[3] = self.rewards['collision']
