@@ -32,7 +32,9 @@ class GazeboCarEnv(gymnasium.Env):
     def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float, render_mode = True):
         super().__init__()
 
-
+        self.temp_time_step_mean = 0 # usunąć
+        self.temp_time_calc_mean = 0 # usunąć
+        self.t2 = 0 
         # --- General inits ---
         # Create subfolder for saving logs from training
         self.LOG_DIR = os.path.join(os.getcwd(), f'./training_logs')
@@ -181,7 +183,7 @@ class GazeboCarEnv(gymnasium.Env):
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             self.camera_img = img
         except Exception as e:
-            self.node.get_logger().warn(f"[Err] Cannot get data from camera:\n{e}")
+            print(f"[Err] Cannot get data from camera:\n{e}")
 
     def _lidar_cb(self, msg: LaserScan):
         try:
@@ -189,7 +191,7 @@ class GazeboCarEnv(gymnasium.Env):
             self.laser = np.clip(self.laser, 0.0, self.laser_range) # clip 
             self.laser = self.laser / self.laser_range
         except Exception as e:
-            self.node.get_logger().warn(f"[Err] Cannot get data from lidaer:\n{e}")
+            print(f"[Err] Cannot get data from lidaer:\n{e}")
        
     def _global_pose_cb(self, msg: Odometry):
         try:
@@ -206,13 +208,13 @@ class GazeboCarEnv(gymnasium.Env):
 
                 self.odom_received = True
         except Exception as e:
-            self.node.get_logger().warn(f"[Err] Cannot get data from odometry:\n{e}")
+            print(f"[Err] Cannot get data from odometry:\n{e}")
 
     # def _global_vel_cb(self, msg: Twist):
     #         try: 
     #             self.global_vel = np.array((msg.linear.x, msg.linear.y))
     #         except Exception as e: 
-    #             self.node.get_logger().warn(f"[Err] Cannot get data from twist:\n{e}")
+    #             print(f"[Err] Cannot get data from twist:\n{e}")
 
     def _collision_cb(self, msg: Contacts):
         if len(msg.contacts) > 0:
@@ -227,8 +229,11 @@ class GazeboCarEnv(gymnasium.Env):
         # self._start_gz()
         self._send_cmd(0.0, 0.0)
         if self.episode_count > 0:
-            self.node.get_logger().warn(f"> Episode {self.episode_count} finished with {self.step_count} steps.") 
-            self.node.get_logger().warn(f"> Rewards: \n\
+            print(f"> Episode {self.episode_count} finished with {self.step_count} steps.") 
+            print(f"> Mean step time: {self.temp_time_step_mean/self.step_count}") # usunąć 
+            print(f"> Mean step time: {self.temp_time_calc_mean/self.step_count}") # usunąć 
+            
+            print(f"> Rewards: \n\
                                         > velocity: {self.rewards_components_sum[0]} \n\
                                         > trajectory: {self.rewards_components_sum[1]} \n\
                                         > ang_vel: {self.rewards_components_sum[2]} \n\
@@ -242,12 +247,12 @@ class GazeboCarEnv(gymnasium.Env):
         self.collision_flag = False
         self.timeout_flag = False
 
-        self.node.get_logger().warn(f"[Episode|{self.episode_count}] Episode start") 
+        print(f"[Episode|{self.episode_count}] Episode start") 
 
         self.trajectory.visu_reset()
         # put on random posiition:
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
-        self.node.get_logger().warn(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
+        print(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
         self._teleport_car(x_st, y_st, yaw_st)
 
         obs = self._get_obs_blocking()
@@ -258,8 +263,10 @@ class GazeboCarEnv(gymnasium.Env):
         return obs, self.reset_info   
 
     def step(self, action):
+        self.temp_time_calc_mean +=  time.time() - self.t2
+        t1 = time.time() # usunąć
         if self.step_count == 0:
-            self.node.get_logger().warn(f"> Episode in progres...") 
+            print(f"> Episode in progres...") 
         self.step_count += 1
         # scale norm action (-1, 1) to action boundaries
         # self._start_gz()
@@ -312,14 +319,16 @@ class GazeboCarEnv(gymnasium.Env):
 
         # log info 
         info = {}
-
+        self.t2 = time.time()
+        self.temp_time_step_mean += self.t2 - t1 # usunąć
+        
         return obs, reward, terminated, truncated, info
 
 
     def render(self):
         self.trajectory.visu_save(self.LOG_DIR, self.episode_count)
         self.trajectory.traj_save(self.LOG_DIR, self.episode_count)
-        self.node.get_logger().warn(f"[Visualisation render finished.]")
+        print(f"[Visualisation render finished.]")
 
     # ------------- POMOCNICZE ------------- #
     def _send_cmd(self, v, w):
@@ -381,7 +390,7 @@ class GazeboCarEnv(gymnasium.Env):
         if self.collision_flag:
             self.rewards_components[3] = self.rewards['collision']
             # reward += self.rewards['collision']
-            self.node.get_logger().warn(f"[Event] Collision detected.")
+            print(f"[Event] Collision detected.")
         else:
             self.rewards_components[3] = 0.0
 
@@ -396,7 +405,7 @@ class GazeboCarEnv(gymnasium.Env):
         if self.destination_reached_flag:
             self.rewards_components[5] = self.rewards['destin']
             # reward += self.rewards['destin']
-            self.node.get_logger().warn(f"[Event] Destination reached.")
+            print(f"[Event] Destination reached.")
         else:
             self.rewards_components[5] = 0.0
 
@@ -429,66 +438,26 @@ class GazeboCarEnv(gymnasium.Env):
                 self.node.get_logger().info(f"[Event] Teleport succes: x={x:.2f}, y={y:.2f}")
                 # self._send_cmd(0.0, 0.0)
             else:
-                self.node.get_logger().warn(f"[Error] Teleport executed but return false: {result.stdout}")
+                print(f"[Error] Teleport executed but return false: {result.stdout}")
 
         except subprocess.CalledProcessError as e:
             self.node.get_logger().error(f"[Error] Teleport failed: {e.stderr}")
 
 
-    # def _stop_gz(self):
-    #     req_content = 'pause: true'
-    #     command = [
-    #         'gz', 'service',
-    #         '-s', '/world/mecanum_drive/control',
-    #         '--reqtype', 'gz.msgs.WorldControl',
-    #         '--reptype', 'gz.msgs.Boolean',
-    #         '--timeout', '2000',
-    #         '--req', req_content
-    #     ]
-    #     try:
-    #         result = subprocess.run(command, capture_output=True, text=True, check=True)
-    #     except subprocess.CalledProcessError as e:
-    #         self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
+    def _stop_gz(self):
+       
+        try:
+            os.system("gz service -s /world/mecanum_drive/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 3000 --req 'pause: true'")
+        except Exception as e:
+            self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
 
-    # def _start_gz(self):
-    #     req_content = 'pause: false'
-    #     command = [
-    #         'gz', 'service',
-    #         '-s', '/world/mecanum_drive/control',
-    #         '--reqtype', 'gz.msgs.WorldControl',
-    #         '--reptype', 'gz.msgs.Boolean',
-    #         '--timeout', '2000',
-    #         '--req', req_content
-    #     ]
-    #     try:
-    #         result = subprocess.run(command, capture_output=True, text=True, check=True)
-    #     except subprocess.CalledProcessError as e:
-    #         self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
+    def _start_gz(self):
+        
+        try:
+           os.system("gz service -s /world/mecanum_drive/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 3000 --req 'pause: false'")
+        except Exception as e:
+            self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
             
-
-
-        # req = SetEntityPose.Request() # request object
-        # req.state.name = 'vehicle_blue' # object identification
-        # req.state.pose.position.x = float(x)
-        # req.state.pose.position.y = float(y)
-        # req.state.pose.position.z = 0.05 # a little bit over ground to avoid blocking
-        # req.state.twist.linear.x = 0.0
-        # req.state.twist.linear.y = 0.0
-        # req.state.twist.angular.z = 0.0
-        # req.state.pose.orientation = self._get_quaternion_from_yaw(yaw)
-        # # check if service is available
-        # if not self.set_state_client.wait_for_service(timeout_sec=2.0):
-        #      self.node.get_logger().error('[Error] Request service is not available.')
-        # # send request and block superior fcn until request done
-        # future = self.set_state_client.call_async(req)
-        # rclpy.spin_until_future_complete(self.node, future, timeout_sec=2.0)
-        # if future.result() is not None and future.result().success:
-        #     self.node.get_logger().info(f"[Event] Teleport successful to x={x:.2f}, y={y:.2f}, yaw={yaw:.2f}")
-        # elif future.result() is not None:
-        #     self.node.get_logger().error(f"[Error] Teleport failed: {future.result().status_message}")
-        # else:
-        #     self.node.get_logger().error("[Error] Teleport request timed out or failed to get result.")
-
 
     def _get_quaternion_from_yaw(self, yaw):
         q = Quaternion()
