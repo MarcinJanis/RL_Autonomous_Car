@@ -440,7 +440,7 @@ class GazeboCarEnv(gymnasium.Env):
         q = self._get_quaternion_from_yaw(yaw)
         req_content = (
             f'name: "vehicle_blue", '
-            f'position: {{x: {x}, y: {y}, z: 0.05}}, '
+            f'position: {{x: {x}, y: {y}, z: 0.05}}, ' # z: 0.33? x: 0.0?
             f'orientation: {{x: {q.x}, y: {q.y}, z: {q.z}, w: {q.w}}}'
         )
 
