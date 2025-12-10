@@ -32,7 +32,7 @@ class GazeboCarEnv(gymnasium.Env):
     def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float, render_mode = True):
         super().__init__()
 
-
+        self.temp_time_mean = 0 # usunąć
         # --- General inits ---
         # Create subfolder for saving logs from training
         self.LOG_DIR = os.path.join(os.getcwd(), f'./training_logs')
@@ -228,6 +228,7 @@ class GazeboCarEnv(gymnasium.Env):
         self._send_cmd(0.0, 0.0)
         if self.episode_count > 0:
             self.node.get_logger().warn(f"> Episode {self.episode_count} finished with {self.step_count} steps.") 
+            self.node.get_logger().warn(f"> Mean step time: {self.temp_time_mean/self.step_count}") # usunąć 
             self.node.get_logger().warn(f"> Rewards: \n\
                                         > velocity: {self.rewards_components_sum[0]} \n\
                                         > trajectory: {self.rewards_components_sum[1]} \n\
@@ -258,6 +259,7 @@ class GazeboCarEnv(gymnasium.Env):
         return obs, self.reset_info   
 
     def step(self, action):
+        t1 = time.time() # usunąć
         if self.step_count == 0:
             self.node.get_logger().warn(f"> Episode in progres...") 
         self.step_count += 1
@@ -312,7 +314,7 @@ class GazeboCarEnv(gymnasium.Env):
 
         # log info 
         info = {}
-
+        self.temp_time_mean += time.time() - t1 # usunąć
         return obs, reward, terminated, truncated, info
 
 
@@ -436,59 +438,19 @@ class GazeboCarEnv(gymnasium.Env):
 
 
     def _stop_gz(self):
-        req_content = 'pause: true'
-        command = [
-            'gz', 'service',
-            '-s', '/world/mecanum_drive/control',
-            '--reqtype', 'gz.msgs.WorldControl',
-            '--reptype', 'gz.msgs.Boolean',
-            '--timeout', '2000',
-            '--req', req_content
-        ]
+       
         try:
-            result = subprocess.run(command, capture_output=True, text=True, check=True)
-        except subprocess.CalledProcessError as e:
+            os.system("gz service -s /world/mecanum_drive/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 3000 --req 'pause: true'")
+        except Exception as e:
             self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
 
     def _start_gz(self):
-        req_content = 'pause: false'
-        command = [
-            'gz', 'service',
-            '-s', '/world/mecanum_drive/control',
-            '--reqtype', 'gz.msgs.WorldControl',
-            '--reptype', 'gz.msgs.Boolean',
-            '--timeout', '2000',
-            '--req', req_content
-        ]
+        
         try:
-            result = subprocess.run(command, capture_output=True, text=True, check=True)
-        except subprocess.CalledProcessError as e:
+           os.system("gz service -s /world/mecanum_drive/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 3000 --req 'pause: false'")
+        except Exception as e:
             self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
             
-
-
-        # req = SetEntityPose.Request() # request object
-        # req.state.name = 'vehicle_blue' # object identification
-        # req.state.pose.position.x = float(x)
-        # req.state.pose.position.y = float(y)
-        # req.state.pose.position.z = 0.05 # a little bit over ground to avoid blocking
-        # req.state.twist.linear.x = 0.0
-        # req.state.twist.linear.y = 0.0
-        # req.state.twist.angular.z = 0.0
-        # req.state.pose.orientation = self._get_quaternion_from_yaw(yaw)
-        # # check if service is available
-        # if not self.set_state_client.wait_for_service(timeout_sec=2.0):
-        #      self.node.get_logger().error('[Error] Request service is not available.')
-        # # send request and block superior fcn until request done
-        # future = self.set_state_client.call_async(req)
-        # rclpy.spin_until_future_complete(self.node, future, timeout_sec=2.0)
-        # if future.result() is not None and future.result().success:
-        #     self.node.get_logger().info(f"[Event] Teleport successful to x={x:.2f}, y={y:.2f}, yaw={yaw:.2f}")
-        # elif future.result() is not None:
-        #     self.node.get_logger().error(f"[Error] Teleport failed: {future.result().status_message}")
-        # else:
-        #     self.node.get_logger().error("[Error] Teleport request timed out or failed to get result.")
-
 
     def _get_quaternion_from_yaw(self, yaw):
         q = Quaternion()
