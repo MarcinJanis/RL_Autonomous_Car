@@ -224,7 +224,7 @@ class GazeboCarEnv(gymnasium.Env):
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
         # stop robot
-        self._start_gz()
+        # self._start_gz()
         self._send_cmd(0.0, 0.0)
         if self.episode_count > 0:
             self.node.get_logger().warn(f"> Episode {self.episode_count} finished with {self.step_count} steps.") 
@@ -251,7 +251,7 @@ class GazeboCarEnv(gymnasium.Env):
         self._teleport_car(x_st, y_st, yaw_st)
 
         obs = self._get_obs_blocking()
-        self._stop_gz()
+        # self._stop_gz()
 
         rclpy.spin_once(self.node, timeout_sec=0.01)
         
@@ -262,7 +262,7 @@ class GazeboCarEnv(gymnasium.Env):
             self.node.get_logger().warn(f"> Episode in progres...") 
         self.step_count += 1
         # scale norm action (-1, 1) to action boundaries
-        self._start_gz()
+        # self._start_gz()
         v_norm = float(np.clip(action[0], 0.0, 1.0))
         w_norm = float(np.clip(action[1], -1.0, 1.0))
 
@@ -279,7 +279,7 @@ class GazeboCarEnv(gymnasium.Env):
 
         # get obs  
         obs = self._get_obs()
-        self._stop_gz()
+        # self._stop_gz()
 
         x, y = self.global_pose
         vx, vy, ang_vz = self.global_vel
@@ -435,35 +435,35 @@ class GazeboCarEnv(gymnasium.Env):
             self.node.get_logger().error(f"[Error] Teleport failed: {e.stderr}")
 
 
-    def _stop_gz(self):
-        req_content = 'pause: true'
-        command = [
-            'gz', 'service',
-            '-s', '/world/mecanum_drive/control',
-            '--reqtype', 'gz.msgs.WorldControl',
-            '--reptype', 'gz.msgs.Boolean',
-            '--timeout', '2000',
-            '--req', req_content
-        ]
-        try:
-            result = subprocess.run(command, capture_output=True, text=True, check=True)
-        except subprocess.CalledProcessError as e:
-            self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
+    # def _stop_gz(self):
+    #     req_content = 'pause: true'
+    #     command = [
+    #         'gz', 'service',
+    #         '-s', '/world/mecanum_drive/control',
+    #         '--reqtype', 'gz.msgs.WorldControl',
+    #         '--reptype', 'gz.msgs.Boolean',
+    #         '--timeout', '2000',
+    #         '--req', req_content
+    #     ]
+    #     try:
+    #         result = subprocess.run(command, capture_output=True, text=True, check=True)
+    #     except subprocess.CalledProcessError as e:
+    #         self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
 
-    def _start_gz(self):
-        req_content = 'pause: false'
-        command = [
-            'gz', 'service',
-            '-s', '/world/mecanum_drive/control',
-            '--reqtype', 'gz.msgs.WorldControl',
-            '--reptype', 'gz.msgs.Boolean',
-            '--timeout', '2000',
-            '--req', req_content
-        ]
-        try:
-            result = subprocess.run(command, capture_output=True, text=True, check=True)
-        except subprocess.CalledProcessError as e:
-            self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
+    # def _start_gz(self):
+    #     req_content = 'pause: false'
+    #     command = [
+    #         'gz', 'service',
+    #         '-s', '/world/mecanum_drive/control',
+    #         '--reqtype', 'gz.msgs.WorldControl',
+    #         '--reptype', 'gz.msgs.Boolean',
+    #         '--timeout', '2000',
+    #         '--req', req_content
+    #     ]
+    #     try:
+    #         result = subprocess.run(command, capture_output=True, text=True, check=True)
+    #     except subprocess.CalledProcessError as e:
+    #         self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
             
 
 
