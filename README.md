@@ -1,26 +1,31 @@
 # TODO
 ___
-
-1. Przyspieszenie treningu
-- w `mecanum.sdf` ustawić parametr `<real_time_factor>1</real_time_factor>` na wartość **0** : `<real_time_factor>0</real_time_factor>`. <br> zniesie to ograniczenie symulacji do czasu rzeczywistego
-- przeliczyć odpowiednio jak nalezy zmeinić parametr `TIME_STEP` w pliku `test_SB3.py`, tak aby dopasowac czas jednego time stampu do przyspieszenia symulacji
-
-2. Dopasowac wartosci kary:
-
-przykładowe warotści z jakiegoś przejazdu przy aktualnych wartościach kary
-> Episode 3 finished with 752 steps.
-> Rewards: 
-> velocity: 406.1731872558594 
-> trajectory: -6856.5400390625 
-> ang_vel: -35.17915725708008 
-> collision: -15.0 
-> timeout: 0.0
-
-- zwiększyć znacznie karę za kolizję, lub dac sto razy mniejszą za trajektorię, z 15 - 20 razy mniejszą za prędkość kątową, i 100 razy mniejszą za pręsdkość liniwoą
-
-
-3. Zatrzymać symulajcę po obserwacji i wznowić przed podjęciem akcji - tak jak teleportacja
-# Resolved 
+## 1. Przeprowadzić wstępny trening
+- zapisać gdzieś wszystkie wyniki (csv i png) stworzone przez funkcję render() (chyba w fodlerze `training_logs` czy coś takiego)
+- zapisać gdzieś najlepszy model
 ___
-1. render() - symulacja zgłasza warning że nie podano render_mode = True, ale można to zignorować - zaimplementowałem funkcję tak że tego nie potrzebuje. Przyszłościowo można dać ten render_mode jako argument i nic z nim nie ribić żeby nie krzyczało 
+## 2. Napisać funkcję (nowy plik i w nowym folderze, zeby nie było to razem z programami do nauki):
+- wczytuje model i wagi
+- tworzy publishera na temacie /cmd_vel
+- tworzy subscribera na tematach do kamery i lidaru
+- podczytmuje noda, odbierając wejścia, przepuszczjąc przez sieć i wysyłąc komendy sterujące
+- zapisuje gdzieś logi, dane to ewaluacji
+- używajac funkcji z `trajectory_gt.py` rysuje gt i aktualną trajektorię w czasie rzeczywistym
+- może rejestruje przebieg w postaci filmiku (?)
+___
+## 3. Przyspieszenie treningu
+
+W `mecanum.sdf` jest parametr `<real_time_factor>1</real_time_factor>`. Służy od określania prędkości symulacji.<br>
+Wartość **1** oznacza synchronizację z rzeczywistym zegarem czyli 1 s w symulacji odpowiada 1 s w rzeczywistości. <br>
+Wartość **0** oznacza symulajcę z największą prędkością - brak kontroli nad czasem wykonywania się. 
+
+**Do zrobienia:**
+- poczytać czy można określić np. real_time_factor = 2 żeby przyspieszyć symulację 2 krotnie.
+- jeśli jest taka możliwość:
+- w pliku `gazebo_car_env` dodać argument do kontruktora `_init_()` który przyjmuje liczbę jaką wpisaliśmy do `mecanum.sdf`.
+- w funkcji `step()` jest pętla która odpowiada za czekanie, z wykorzystaniem funkcji z biblioteki `time`. Należy odpowiendnio przeskalować czas oczekiwania, tj. jeśli np. symulajca jest przyspieszona dwukrotnie, to czas musi być dwukrotnie mniejszy itp.
+- w pliku `train_SB3` podać wszędzie gdzie trzeba ten argument
+- przebadać jakie największe przyspieszenie można dać żeby sie wszystko nie wywaliło 
+  
+
 
