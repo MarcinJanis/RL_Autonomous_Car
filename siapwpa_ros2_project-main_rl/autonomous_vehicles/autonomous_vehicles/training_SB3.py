@@ -56,7 +56,7 @@ wandb.login()
 run = wandb.init(
     project="RL_Autonomous_Car",
     entity="deep-neural-network-course",
-    name='RL_TestRun_1', # Name
+    name='RL_TestRun_2', # Name
     settings=wandb.Settings(save_code=False),
     config=config,
     sync_tensorboard=True,
