@@ -219,7 +219,9 @@ class GazeboCarEnv(gymnasium.Env):
     #             self.node.get_logger().info(f"[Err] Cannot get data from twist:\n{e}")
 
     def _collision_cb(self, msg: Contacts):
-        if len(msg.contacts) > 0:
+        for c in msg.contacts:
+            self.node.get_logger().info(f"Contact: {c.collision1} and {c.collision2}")
+        if len(msg.contacts) > 0 and self.step_count > 3:
             self.collision_flag = True
         else: 
             self.collision_flag = False
@@ -229,19 +231,18 @@ class GazeboCarEnv(gymnasium.Env):
         super().reset(seed=seed)
 
         # stop robot
-        self._start_gz()
+        # self._start_gz()
         self._send_cmd(0.0, 0.0)
         if self.episode_count > 0:
             self.node.get_logger().info(f"> Episode {self.episode_count} finished with {self.step_count} steps.") 
-            self.node.get_logger().info(f"> Mean step time: {self.temp_time_step_mean/self.step_count}") # usunąć 
-            self.node.get_logger().info(f"> Mean step time: {self.temp_time_calc_mean/self.step_count}") # usunąć 
+            self.node.get_logger().info(f"> Mean step time: {self.temp_time_step_mean/(self.step_count+1)}") # usunąć 
+            self.node.get_logger().info(f"> Mean calc per step time: {self.temp_time_calc_mean/(self.step_count+1)}") # usunąć 
             self.temp_time_step_mean = 0 
             self.temp_time_calc_mean = 0 
-
             self.node.get_logger().info(f"> Rewards: \n\
                                         > velocity: {self.rewards_components_sum[0]} \n\
                                         > trajectory: {self.rewards_components_sum[1]} \n\
-                                        > ang_vel: {self.rewards_components_sum[2]} \n\
+                                        > progress: {self.rewards_components_sum[2]} \n\
                                         > collision: {self.rewards_components_sum[3]} \n\
                                         > timeout: {self.rewards_components_sum[4]} \n\
                                         > destin: {self.rewards_components_sum[5]} ")
@@ -266,7 +267,7 @@ class GazeboCarEnv(gymnasium.Env):
         self._teleport_car(x_st, y_st, yaw_st)
 
         obs = self._get_obs_blocking()
-        self._stop_gz()
+        # self._stop_gz()
 
         self.t2 = time.time()
         rclpy.spin_once(self.node, timeout_sec=0.01)
@@ -282,7 +283,7 @@ class GazeboCarEnv(gymnasium.Env):
             self.node.get_logger().info(f"> Episode in progres...") 
         self.step_count += 1
         # scale norm action (-1, 1) to action boundaries
-        self._start_gz()
+        # self._start_gz()
         v_norm = float(np.clip(action[0], 0.0, 1.0))
         w_norm = float(np.clip(action[1], -1.0, 1.0))
 
@@ -299,7 +300,7 @@ class GazeboCarEnv(gymnasium.Env):
 
         # get obs  
         obs = self._get_obs()
-        self._stop_gz()
+        # self._stop_gz()
 
         x, y = self.global_pose
         vx, vy, ang_vz = self.global_vel
@@ -394,7 +395,7 @@ class GazeboCarEnv(gymnasium.Env):
         # reward += v_xy * self.rewards['velocity']
         self.rewards_components[0] = v_xy * self.rewards['velocity']
         # 2 - reward for distance from desire trajectory
-        _, _, dist, prog = self.trajectory.get_dist(x, y) # x_cp, y_cp - closet points on trajectory
+        _, _, dist, prog = self.trajectory.get_stats(x, y) # x_cp, y_cp - closet points on trajectory
         # reward += dist * self.rewards['trajectory'] 
         self.rewards_components[1] = dist * self.rewards['trajectory'] 
         # 3 - reward for collision
@@ -440,7 +441,7 @@ class GazeboCarEnv(gymnasium.Env):
         q = self._get_quaternion_from_yaw(yaw)
         req_content = (
             f'name: "vehicle_blue", '
-            f'position: {{x: {x}, y: {y}, z: 0.05}}, ' # z: 0.33? x: 0.0?
+            f'position: {{x: {x}, y: {y}, z: 0.35}}, '
             f'orientation: {{x: {q.x}, y: {q.y}, z: {q.z}, w: {q.w}}}'
         )
 
