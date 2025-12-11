@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 4.1.0 commit date:2024-03-25, commit time:20:42, hash:40a5e739e270</authoring_tool>
+    </contributor>
+    <created>2025-12-02T18:38:13</created>
+    <modified>2025-12-02T18:38:13</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_effects>
+    <effect id="wall_materialref_006-effect">
+      <profile_COMMON>
+        <newparam sid="walls_jpg_001-surface">
+          <surface type="2D">
+            <init_from>walls_jpg_001</init_from>
+          </surface>
+        </newparam>
+        <newparam sid="walls_jpg_001-sampler">
+          <sampler2D>
+            <source>walls_jpg_001-surface</source>
+          </sampler2D>
+        </newparam>
+        <technique sid="common">
+          <lambert>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <diffuse>
+              <texture texture="walls_jpg_001-sampler" texcoord="wallShape-mesh-mesh-map-0"/>
+            </diffuse>
+            <index_of_refraction>
+              <float sid="ior">1.45</float>
+            </index_of_refraction>
+          </lambert>
+        </technique>
+      </profile_COMMON>
+    </effect>
+    <effect id="field_materialref_006-effect">
+      <profile_COMMON>
+        <newparam sid="field_png_001-surface">
+          <surface type="2D">
+            <init_from>field_png_001</init_from>
+          </surface>
+        </newparam>
+        <newparam sid="field_png_001-sampler">
+          <sampler2D>
+            <source>field_png_001-surface</source>
+          </sampler2D>
+        </newparam>
+        <technique sid="common">
+          <lambert>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <diffuse>
+              <texture texture="field_png_001-sampler" texcoord="fieldShape-mesh-mesh-map-0"/>
+            </diffuse>
+            <index_of_refraction>
+              <float sid="ior">1.45</float>
+            </index_of_refraction>
+          </lambert>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_images>
+    <image id="field_png_001" name="field_png_001">
+      <init_from>field.png.001.png</init_from>
+    </image>
+    <image id="walls_jpg_001" name="walls_jpg_001">
+      <init_from>walls.jpg.001.jpg</init_from>
+    </image>
+  </library_images>
+  <library_materials>
+    <material id="wall_materialref_006-material" name="wall_materialref.006">
+      <instance_effect url="#wall_materialref_006-effect"/>
+    </material>
+    <material id="field_materialref_006-material" name="field_materialref.006">
+      <instance_effect url="#field_materialref_006-effect"/>
+    </material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="wallShape-mesh_006-mesh" name="wallShape-mesh.006">
+      <mesh>
+        <source id="wallShape-mesh_006-mesh-positions">
+          <float_array id="wallShape-mesh_006-mesh-positions-array" count="24">-0.5873531 -0.6125186 0 8.575422 -0.6125186 0 8.575422 5.795439 0 -0.5873531 5.795439 0 -0.5873531 -0.6125186 1 8.575422 -0.6125186 1 8.575422 5.795439 1 -0.5873531 5.795439 1</float_array>
+          <technique_common>
+            <accessor source="#wallShape-mesh_006-mesh-positions-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="wallShape-mesh_006-mesh-normals">
+          <float_array id="wallShape-mesh_006-mesh-normals-array" count="12">0 1 0 -1 0 0 0 -1 0 1 0 0</float_array>
+          <technique_common>
+            <accessor source="#wallShape-mesh_006-mesh-normals-array" count="4" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="wallShape-mesh_006-mesh-map-0">
+          <float_array id="wallShape-mesh_006-mesh-map-0-array" count="48">0 0 0 0 1 0 1 0 0 0 1 0 1 0 1 0 0 1 0 1 1 0 0 1 0 1 0 1 1 1 1 1 0 1 1 1 0 0 0 0 1 1 1 1 0 0 1 1</float_array>
+          <technique_common>
+            <accessor source="#wallShape-mesh_006-mesh-map-0-array" count="24" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="wallShape-mesh_006-mesh-vertices">
+          <input semantic="POSITION" source="#wallShape-mesh_006-mesh-positions"/>
+        </vertices>
+        <triangles material="wall_materialref_006-material" count="8">
+          <input semantic="VERTEX" source="#wallShape-mesh_006-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#wallShape-mesh_006-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#wallShape-mesh_006-mesh-map-0" offset="2" set="0"/>
+          <p>0 0 0 4 0 1 1 0 2 1 0 3 4 0 4 5 0 5 1 1 6 5 1 7 2 1 8 2 1 9 5 1 10 6 1 11 2 2 12 6 2 13 3 2 14 3 2 15 6 2 16 7 2 17 4 3 18 0 3 19 7 3 20 7 3 21 0 3 22 3 3 23</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="fieldShape-mesh_006-mesh" name="fieldShape-mesh.006">
+      <mesh>
+        <source id="fieldShape-mesh_006-mesh-positions">
+          <float_array id="fieldShape-mesh_006-mesh-positions-array" count="12">-0.5873531 -0.6125186 0 8.575422 -0.6125186 0 -0.5873531 5.795439 0 8.575422 5.795439 0</float_array>
+          <technique_common>
+            <accessor source="#fieldShape-mesh_006-mesh-positions-array" count="4" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="fieldShape-mesh_006-mesh-normals">
+          <float_array id="fieldShape-mesh_006-mesh-normals-array" count="3">0 0 1</float_array>
+          <technique_common>
+            <accessor source="#fieldShape-mesh_006-mesh-normals-array" count="1" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="fieldShape-mesh_006-mesh-map-0">
+          <float_array id="fieldShape-mesh_006-mesh-map-0-array" count="12">-0.5873531 -0.6125186 8.575422 -0.6125186 -0.5873531 5.795439 -0.5873531 5.795439 8.575422 -0.6125186 8.575422 5.795439</float_array>
+          <technique_common>
+            <accessor source="#fieldShape-mesh_006-mesh-map-0-array" count="6" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="fieldShape-mesh_006-mesh-vertices">
+          <input semantic="POSITION" source="#fieldShape-mesh_006-mesh-positions"/>
+        </vertices>
+        <triangles material="field_materialref_006-material" count="2">
+          <input semantic="VERTEX" source="#fieldShape-mesh_006-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#fieldShape-mesh_006-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#fieldShape-mesh_006-mesh-map-0" offset="2" set="0"/>
+          <p>0 0 0 1 0 1 2 0 2 2 0 3 1 0 4 3 0 5</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="wall" name="wall" type="NODE">
+        <matrix sid="transform">7 0 0 0 0 7 0 0 0 0 7 0 0 0 0 1</matrix>
+        <instance_geometry url="#wallShape-mesh_006-mesh" name="wall">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="wall_materialref_006-material" target="#wall_materialref_006-material">
+                <bind_vertex_input semantic="wallShape-mesh-mesh-map-0" input_semantic="TEXCOORD" input_set="0"/>
+              </instance_material>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+      <node id="field" name="field" type="NODE">
+        <matrix sid="transform">7 0 0 0 0 7 0 0 0 0 7 0 0 0 0 1</matrix>
+        <instance_geometry url="#fieldShape-mesh_006-mesh" name="field">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="field_materialref_006-material" target="#field_materialref_006-material">
+                <bind_vertex_input semantic="fieldShape-mesh-mesh-map-0" input_semantic="TEXCOORD" input_set="0"/>
+              </instance_material>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>
