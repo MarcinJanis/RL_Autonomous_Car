@@ -49,6 +49,7 @@ config = {
    "policy_type": "MultiInputPolicy",
     "total_timesteps": TOTAL_STEPS,
     "max_steps_per_episode": MAX_STEPS_PER_EPISODE,
+    "rewards" : rewards
 }
 
 wandb.login()
