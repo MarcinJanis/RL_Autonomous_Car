@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib
-# matplotlib.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.interpolate import splprep, splev
 # import cv2
@@ -221,6 +221,7 @@ class traj_gt:
         if set_start_pt:
                     self.x_start = x
                     self.y_start = y
+                    self.prog_prev = idx * self.pt_dist
                     print(f'set start pt: {self.x_start}, {self.y_start}')
         return x, y, yaw
 
