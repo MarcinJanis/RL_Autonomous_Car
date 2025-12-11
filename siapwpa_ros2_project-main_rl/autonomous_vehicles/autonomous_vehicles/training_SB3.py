@@ -30,7 +30,7 @@ EVAL_STEPS = 10000 # Evaluation after this amount of steps
 MAX_STEPS_PER_EPISODE = 1800 # Steps per episoed (max)
 TIME_STEP = 0.1 # [s]
 
-rewards =  { 'velocity': 0.01, 'trajectory': -0.001, 'prog': 0.006, 'collision': -15, 'timeout': -5, 'destin': 20 }
+rewards =  { 'velocity': 1.0, 'trajectory': -0.2, 'prog': 1.0, 'collision': -10, 'timeout': -10, 'destin': 50 }
 # velocity - reward for velocity to motive car to explore
 # trajectory - punishment for distance from desired trajectory 
 # collision - punishment for collision
@@ -71,6 +71,15 @@ wandb_callback = WandbCallback(
     verbose=2,
     # gradient_save_freq=0
 )
+
+class wandb_callback_extra(BaseCallback):
+    def _on_step(self):
+        info = self.locals["infos"][0]
+        if "reset_info" in info:
+            ri = info["reset_info"]
+            for key, value in ri.items():
+                self.logger.record(f"rewards_components/{key}", value)
+        return True
 
 # --- Init Environment ---
 env = gazebo_env(time_step = TIME_STEP,
@@ -132,7 +141,7 @@ class EnvEvalCallback(BaseCallback):
         if self.n_calls % self.eval_freq == 0:
             if  self.verbose > 0:
                 print('[Eval] Evaluation starting ...')
-                self.eval_cntr += 1
+            self.eval_cntr += 1
             total_rewards = []
             n_episodes = 3
 
@@ -156,14 +165,14 @@ class EnvEvalCallback(BaseCallback):
                     single_env.render()
                     print('[Eval] Render suceed.')
                 except Exception as e:
-                    print('[Error] Cant render ')
+                    print(f'[Error] Cant render: {e} ')
 
             mean_reward = np.mean(total_rewards)
             if self.verbose > 0:
                 print(f'[Eval] Statstic: ')
                 print(f'Mean reward: {mean_reward} +/- {np.std(total_rewards)}')
                 for k in range(n_episodes):
-                    print(f'Episode {k}: rewards: {total_rewards}')
+                    print(f'Episode {k}: rewards: {total_rewards[k]}')
 
             if mean_reward > self.best_mean_reward:
                 self.best_mean_reward = mean_reward
@@ -171,8 +180,7 @@ class EnvEvalCallback(BaseCallback):
                 self.model.save(os.path.join(self.log_dir, name))
 
                 print(f'[Eval] New best model save: {os.path.join(self.log_dir, name)}')
-
-                
+ 
             self.training_env.reset()
         return True
     
@@ -241,14 +249,13 @@ model = PPO(
 
 
 # Final Architecture visualization
-print("--- Print architecture ---")
+print("--- Architecture: ---")
 print(model.policy)
-print("----------------------------------")
+print('-'*10)
 
 # Trening
 print('-'*10)
 print('Starting training')
-print('-'*20)
 model.learn(total_timesteps=TOTAL_STEPS, callback=[wandb_callback, eval_callback])
 model.save("RL_Autonomous_Car_finalmodel_1.zip")
 run.finish()
