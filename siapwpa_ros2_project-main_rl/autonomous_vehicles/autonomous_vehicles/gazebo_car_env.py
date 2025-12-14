@@ -215,8 +215,8 @@ class GazeboCarEnv(gymnasium.Env):
             self.node.get_logger().info(f"Contact: {c.collision1} and {c.collision2}")
         if len(msg.contacts) > 0 and self.step_count > 3:
             self.collision_flag = True
-        else: 
-            self.collision_flag = False
+        # else: 
+        #     self.collision_flag = False
 
     # ------------- GYM API ------------- #
     def reset(self, *, seed=None, options=None):
@@ -271,7 +271,7 @@ class GazeboCarEnv(gymnasium.Env):
         self._teleport_car(x_st, y_st, yaw_st)
 
         obs = self._get_obs_blocking()
-        self.node.get_logger().info(f"> pDebug] Real new pos: x =  {self.global_pose[0]}, y = {self.global_pose[1]}") 
+        self.node.get_logger().info(f"> [Debug] Real new pos: x =  {self.global_pose[0]}, y = {self.global_pose[1]}") 
         # self._stop_gz()
 
         self.t2 = time.time()
@@ -298,8 +298,8 @@ class GazeboCarEnv(gymnasium.Env):
         self._send_cmd(v, w)
         
         # wait for get response
-        start_time = self._get_time_seconds() #time.time()
-        while self._get_time_seconds() - start_time < self.time_step:# time.time() - start_time < self.time_step:
+        start_time = time.time()
+        while  time.time() - start_time < self.time_step:
             rclpy.spin_once(self.node, timeout_sec=0.05)
 
         # get obs  
@@ -347,12 +347,12 @@ class GazeboCarEnv(gymnasium.Env):
         self.trajectory.visu_save(
             self.LOG_DIR, 
             self.episode_count, 
-            trajectory_override=self.last_episode_traj
+            traj_override=self.last_episode_traj
         )
         self.trajectory.traj_save(
             self.LOG_DIR, 
             self.episode_count, 
-            trajectory_override=self.last_episode_traj,
+            traj_override=self.last_episode_traj,
             velocity_override=self.last_episode_vel
         )
         self.node.get_logger().info(f"[Visualisation render finished.]")
