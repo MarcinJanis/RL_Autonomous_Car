@@ -40,6 +40,9 @@ class GazeboCarEnv(gymnasium.Env):
         self.LOG_DIR = os.path.join(os.getcwd(), f'./training_logs')
         os.makedirs(name=self.LOG_DIR, exist_ok=True)
 
+        self.log_file_path = os.path.join(self.LOG_DIR, 'episode_summaries.log')
+        self.log_file = open(self.log_file_path, 'a')
+        self.log_file.write("--- Training Log Start ---\n")
 
         self.render_mode = True
         self.time_step = time_step
@@ -211,12 +214,12 @@ class GazeboCarEnv(gymnasium.Env):
             self.node.get_logger().info(f"[Err] Cannot get data from odometry:\n{e}")
 
     def _collision_cb(self, msg: Contacts):
-        for c in msg.contacts:
-            self.node.get_logger().info(f"Contact: {c.collision1} and {c.collision2}")
+        # for c in msg.contacts:
+        #     self.node.get_logger().info(f"Contact: {c.collision1} and {c.collision2}")
         if len(msg.contacts) > 0 and self.step_count > 3:
             self.collision_flag = True
-        else: 
-            self.collision_flag = False
+        # else: 
+        #     self.collision_flag = False
 
     # ------------- GYM API ------------- #
     def reset(self, *, seed=None, options=None):
@@ -227,6 +230,27 @@ class GazeboCarEnv(gymnasium.Env):
         self._send_cmd(0.0, 0.0)
         reset_info = {}
         if self.episode_count > 0:
+
+            log_message = (
+                f"\n--- Episode {self.episode_count} Finished ---\n"
+                f"> Episode finished with {self.step_count} steps.\n" 
+                f"> Mean step time:{self.temp_time_step_mean/(self.step_count+1)}\n" 
+                f"> Mean calc per step time: {self.temp_time_calc_mean/(self.step_count+1)}\n" 
+                f"> Rewards components:\n"
+                f"> velocity: {self.rewards_components_sum[0]} \n"
+                f"> trajectory: {self.rewards_components_sum[1]} \n"
+                f"> progress: {self.rewards_components_sum[2]} \n"
+                f"> collision: {self.rewards_components_sum[3]} \n"
+                f"> timeout: {self.rewards_components_sum[4]} \n"
+                f"> destin: {self.rewards_components_sum[5]} \n"
+                f"-----------------------------------\n"
+            )
+            if hasattr(self, 'log_file'):
+                self.log_file.write(log_message)
+                self.log_file.flush()
+
+
+
             self.node.get_logger().info(f"> Episode {self.episode_count} finished with {self.step_count} steps.") 
             self.node.get_logger().info(f"> Mean step time: {self.temp_time_step_mean/(self.step_count+1)}") 
             self.node.get_logger().info(f"> Mean calc per step time: {self.temp_time_calc_mean/(self.step_count+1)}") 
@@ -252,6 +276,12 @@ class GazeboCarEnv(gymnasium.Env):
 
             self.rewards_components_sum = np.zeros((len(self.rewards)), dtype = np.float32)
 
+        self.destination_reached_flag = False
+        
+        self.odom_received = False
+        self.camera_img = None
+        self.laser = None
+
         self.episode_count += 1
         self.step_count = 0
         self.collision_flag = False
@@ -268,8 +298,39 @@ class GazeboCarEnv(gymnasium.Env):
         # put on random posiition:
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
         self.node.get_logger().info(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
+
+        old_pose = self.global_pose.copy() # Zapisujemy poprzednią pozycję odczytaną
+
         self._teleport_car(x_st, y_st, yaw_st)
 
+
+        # pętla synchronizacji
+        timeout_start = time.time()
+        max_wait_time = 5.0
+        pos_tolerance = 0.1
+        
+        while time.time() - timeout_start < max_wait_time:
+            rclpy.spin_once(self.node, timeout_sec=0.1) 
+            
+            current_x, current_y = self.global_pose 
+            distance = np.sqrt((current_x - x_st)**2 + (current_y - y_st)**2)
+            
+            if distance < pos_tolerance:
+                self.node.get_logger().info(f"[Event] Odometry sync succes after teleport (Distance: {distance:.3f}m).")
+                break
+
+        else:
+            self.node.get_logger().warn(f"[Warning] Odometry failed to sync within {max_wait_time}s. Proceeding with last known position: ({self.global_pose[0]:.2f}, {self.global_pose[1]:.2f}).")
+        
+
+        
+        x_start_sync, y_start_sync = self.global_pose
+        vx_start_sync, vy_start_sync, ang_vz_start_sync = self.global_vel
+        
+        self.trajectory.add2trajectory((x_start_sync, y_start_sync, vx_start_sync, vy_start_sync))
+        self.node.get_logger().info(f"[Debug] Trajectory start point added: ({x_start_sync:.2f}, {y_start_sync:.2f}).")
+        
+        
         obs = self._get_obs_blocking()
         self.node.get_logger().info(f"> pDebug] Real new pos: x =  {self.global_pose[0]}, y = {self.global_pose[1]}") 
         # self._stop_gz()
@@ -298,8 +359,8 @@ class GazeboCarEnv(gymnasium.Env):
         self._send_cmd(v, w)
         
         # wait for get response
-        start_time = self._get_time_seconds() #time.time()
-        while self._get_time_seconds() - start_time < self.time_step:# time.time() - start_time < self.time_step:
+        start_time =  time.time()
+        while time.time() - start_time < self.time_step:
             rclpy.spin_once(self.node, timeout_sec=0.05)
 
         # get obs  
@@ -314,7 +375,7 @@ class GazeboCarEnv(gymnasium.Env):
                                                                                fin_line_i = (-4.4, 14.61), 
                                                                                y_offset = 0.5)
 
-        reward = self._compute_reward(obs)
+        
 
         # consider termination conditions
         terminated = False
@@ -335,6 +396,10 @@ class GazeboCarEnv(gymnasium.Env):
         # Terminated more important than truncated
         if terminated: truncated = False 
 
+
+        reward = self._compute_reward(obs)
+
+
         # log info 
         info = {}
         self.t2 = time.time() # usunąć
@@ -347,17 +412,22 @@ class GazeboCarEnv(gymnasium.Env):
         self.trajectory.visu_save(
             self.LOG_DIR, 
             self.episode_count, 
-            trajectory_override=self.last_episode_traj
+            traj_override=self.last_episode_traj
         )
         self.trajectory.traj_save(
             self.LOG_DIR, 
             self.episode_count, 
-            trajectory_override=self.last_episode_traj,
-            velocity_override=self.last_episode_vel
+            traj_override=self.last_episode_traj,
+            vel_override=self.last_episode_vel
+        )
+        
+        self.trajectory.traj_save_csv(
+            self.LOG_DIR,
+            self.episode_count,
+            traj_override=self.last_episode_traj
         )
         self.node.get_logger().info(f"[Visualisation render finished.]")
 
-    # ------------- POMOCNICZE ------------- #
     def _send_cmd(self, v, w):
         msg = Twist()
         msg.linear.x = float(v)
@@ -498,6 +568,11 @@ class GazeboCarEnv(gymnasium.Env):
 
     def close(self):
         self._send_cmd(0.0, 0.0)
+
+        if hasattr(self, 'log_file'):
+            self.log_file.write("\n--- Training Log End ---\n")
+            self.log_file.close()
+            
         self.node.destroy_node()
         rclpy.shutdown()
 

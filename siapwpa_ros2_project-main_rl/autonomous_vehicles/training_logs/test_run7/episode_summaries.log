@@ -1,0 +1,561 @@
+--- Training Log Start ---
+
+--- Episode 1 Finished ---
+> Episode finished with 0 steps.
+> Mean step time:0.0
+> Mean calc per step time: 0.0
+> Rewards components:
+> velocity: 0.0 
+> trajectory: 0.0 
+> progress: 0.0 
+> collision: 0.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 2 Finished ---
+> Episode finished with 1 steps.
+> Mean step time:0.09183216094970703
+> Mean calc per step time: 0.0008474588394165039
+> Rewards components:
+> velocity: 0.00022762033040635288 
+> trajectory: -0.003536807605996728 
+> progress: 0.0 
+> collision: 0.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+--- Training Log Start ---
+
+--- Episode 1 Finished ---
+> Episode finished with 55 steps.
+> Mean step time:0.10968752418245588
+> Mean calc per step time: 0.019934173141207014
+> Rewards components:
+> velocity: 0.10756734758615494 
+> trajectory: -0.39121678471565247 
+> progress: 0.0 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 2 Finished ---
+> Episode finished with 92 steps.
+> Mean step time:0.10917710488842379
+> Mean calc per step time: 0.01785881801318097
+> Rewards components:
+> velocity: 0.5252407193183899 
+> trajectory: -1.0576766729354858 
+> progress: 0.10612846165895462 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 3 Finished ---
+> Episode finished with 492 steps.
+> Mean step time:0.10904958136908664
+> Mean calc per step time: 0.026501959284227227
+> Rewards components:
+> velocity: 1.7152881622314453 
+> trajectory: -13.217825889587402 
+> progress: 0.7428991794586182 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 4 Finished ---
+> Episode finished with 114 steps.
+> Mean step time:0.1074746152629023
+> Mean calc per step time: 0.025961985795394233
+> Rewards components:
+> velocity: 0.2315370887517929 
+> trajectory: -2.7734785079956055 
+> progress: 0.14150461554527283 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 5 Finished ---
+> Episode finished with 209 steps.
+> Mean step time:0.10745869477589926
+> Mean calc per step time: 0.02654364790235247
+> Rewards components:
+> velocity: 0.6077711582183838 
+> trajectory: -5.43592643737793 
+> progress: 0.38913774490356445 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 6 Finished ---
+> Episode finished with 50 steps.
+> Mean step time:0.10513545952591241
+> Mean calc per step time: 0.025726799871407302
+> Rewards components:
+> velocity: 0.14969073235988617 
+> trajectory: -0.9332530498504639 
+> progress: 0.14150461554527283 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 7 Finished ---
+> Episode finished with 34 steps.
+> Mean step time:0.10591058731079102
+> Mean calc per step time: 0.33984533718654086
+> Rewards components:
+> velocity: 0.3535153567790985 
+> trajectory: -0.5933459401130676 
+> progress: 0.03537615388631821 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 8 Finished ---
+> Episode finished with 35 steps.
+> Mean step time:0.10645825995339288
+> Mean calc per step time: 0.022373371654086642
+> Rewards components:
+> velocity: 0.14794650673866272 
+> trajectory: -0.7179672122001648 
+> progress: 0.10612846165895462 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 9 Finished ---
+> Episode finished with 122 steps.
+> Mean step time:0.10800417651975058
+> Mean calc per step time: 0.02649986259336394
+> Rewards components:
+> velocity: 0.2995226979255676 
+> trajectory: -2.7166590690612793 
+> progress: 0.17688077688217163 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 10 Finished ---
+> Episode finished with 60 steps.
+> Mean step time:0.1067139594281306
+> Mean calc per step time: 0.02701422034716997
+> Rewards components:
+> velocity: 0.19717729091644287 
+> trajectory: -1.51198148727417 
+> progress: 0.14150461554527283 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 11 Finished ---
+> Episode finished with 98 steps.
+> Mean step time:0.10734728370049987
+> Mean calc per step time: 0.02627926402621799
+> Rewards components:
+> velocity: 0.2094411551952362 
+> trajectory: -2.2917275428771973 
+> progress: 0.14150461554527283 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 12 Finished ---
+> Episode finished with 151 steps.
+> Mean step time:0.10748138553217838
+> Mean calc per step time: 0.026771311697207
+> Rewards components:
+> velocity: 0.4469553828239441 
+> trajectory: -2.6461381912231445 
+> progress: 0.35376158356666565 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 13 Finished ---
+> Episode finished with 67 steps.
+> Mean step time:0.10965545738444608
+> Mean calc per step time: 0.026028629611520207
+> Rewards components:
+> velocity: 0.19978287816047668 
+> trajectory: -1.3281186819076538 
+> progress: 0.5660184025764465 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 14 Finished ---
+> Episode finished with 239 steps.
+> Mean step time:0.10878138542175293
+> Mean calc per step time: 0.027380403876304627
+> Rewards components:
+> velocity: 0.8059217929840088 
+> trajectory: -7.954131126403809 
+> progress: 0.7428990602493286 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 15 Finished ---
+> Episode finished with 383 steps.
+> Mean step time:0.10813772740463416
+> Mean calc per step time: 0.052969664335250854
+> Rewards components:
+> velocity: 1.1477525234222412 
+> trajectory: -17.731290817260742 
+> progress: 0.28300926089286804 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 16 Finished ---
+> Episode finished with 44 steps.
+> Mean step time:0.10752627584669325
+> Mean calc per step time: 0.026320907804701064
+> Rewards components:
+> velocity: 0.12975554168224335 
+> trajectory: -1.1428561210632324 
+> progress: 0.10612846165895462 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 17 Finished ---
+> Episode finished with 51 steps.
+> Mean step time:0.105675247999338
+> Mean calc per step time: 0.02640771407347459
+> Rewards components:
+> velocity: 0.13082720339298248 
+> trajectory: -1.9167146682739258 
+> progress: 0.10612846165895462 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 18 Finished ---
+> Episode finished with 307 steps.
+> Mean step time:0.10986352818352836
+> Mean calc per step time: 0.02688717609876162
+> Rewards components:
+> velocity: 1.2263668775558472 
+> trajectory: -14.752740859985352 
+> progress: 0.9551559686660767 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 19 Finished ---
+> Episode finished with 326 steps.
+> Mean step time:0.10878633140423975
+> Mean calc per step time: 0.02676729470582548
+> Rewards components:
+> velocity: 0.7086471915245056 
+> trajectory: -15.433520317077637 
+> progress: 0.8136513233184814 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 20 Finished ---
+> Episode finished with 420 steps.
+> Mean step time:0.11057194168380774
+> Mean calc per step time: 0.050349691418174324
+> Rewards components:
+> velocity: 1.264575481414795 
+> trajectory: -23.230058670043945 
+> progress: 1.2381654977798462 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 21 Finished ---
+> Episode finished with 455 steps.
+> Mean step time:0.10874085049880178
+> Mean calc per step time: 0.02667844347786485
+> Rewards components:
+> velocity: 1.1146650314331055 
+> trajectory: -26.3648624420166 
+> progress: 0.03537615388631821 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 22 Finished ---
+> Episode finished with 411 steps.
+> Mean step time:0.10875110660941856
+> Mean calc per step time: 0.05261581152388193
+> Rewards components:
+> velocity: 1.1013895273208618 
+> trajectory: -15.856973648071289 
+> progress: 1.2381653785705566 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 23 Finished ---
+> Episode finished with 259 steps.
+> Mean step time:0.10795482030281654
+> Mean calc per step time: 0.026528710585374097
+> Rewards components:
+> velocity: 0.7186977863311768 
+> trajectory: -7.504056453704834 
+> progress: 0.28300926089286804 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 24 Finished ---
+> Episode finished with 321 steps.
+> Mean step time:0.1075983476934966
+> Mean calc per step time: 0.02644857412539654
+> Rewards components:
+> velocity: 0.8700729608535767 
+> trajectory: -14.121270179748535 
+> progress: 0.8844037055969238 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 25 Finished ---
+> Episode finished with 298 steps.
+> Mean step time:0.10804676132457312
+> Mean calc per step time: 0.02644792049624848
+> Rewards components:
+> velocity: 0.9161815047264099 
+> trajectory: -14.947199821472168 
+> progress: 0.07075230777263641 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 26 Finished ---
+> Episode finished with 28 steps.
+> Mean step time:0.10599640320087302
+> Mean calc per step time: 0.39776774932598247
+> Rewards components:
+> velocity: 0.08850462734699249 
+> trajectory: -0.6556549668312073 
+> progress: 0.5660184621810913 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 27 Finished ---
+> Episode finished with 1024 steps.
+> Mean step time:0.10867100366731969
+> Mean calc per step time: 0.03693651757589201
+> Rewards components:
+> velocity: 2.769228935241699 
+> trajectory: -23.788150787353516 
+> progress: 3.254605770111084 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 28 Finished ---
+> Episode finished with 252 steps.
+> Mean step time:0.11003783474797788
+> Mean calc per step time: 0.023401083211182606
+> Rewards components:
+> velocity: 0.8556872606277466 
+> trajectory: -2.4626057147979736 
+> progress: 0.7075230479240417 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 29 Finished ---
+> Episode finished with 143 steps.
+> Mean step time:0.10897018677658504
+> Mean calc per step time: 0.026415410968992446
+> Rewards components:
+> velocity: 0.2657877206802368 
+> trajectory: -1.3239192962646484 
+> progress: 2.7947161197662354 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 30 Finished ---
+> Episode finished with 45 steps.
+> Mean step time:0.10580533483754033
+> Mean calc per step time: 0.025930954062420387
+> Rewards components:
+> velocity: 0.14550113677978516 
+> trajectory: -0.35359400510787964 
+> progress: 3.4314868450164795 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 31 Finished ---
+> Episode finished with 533 steps.
+> Mean step time:0.10772217704115736
+> Mean calc per step time: 0.026779644051741124
+> Rewards components:
+> velocity: 1.2674914598464966 
+> trajectory: -10.615303039550781 
+> progress: 0.7782753109931946 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 32 Finished ---
+> Episode finished with 1800 steps.
+> Mean step time:0.10952165019571748
+> Mean calc per step time: 0.03801348459581611
+> Rewards components:
+> velocity: 4.192781448364258 
+> trajectory: -37.12629699707031 
+> progress: 0.42451390624046326 
+> collision: 0.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 33 Finished ---
+> Episode finished with 229 steps.
+> Mean step time:0.10910311056220014
+> Mean calc per step time: 0.026648116111755372
+> Rewards components:
+> velocity: 0.502193808555603 
+> trajectory: -2.6682162284851074 
+> progress: 1.2735415697097778 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 34 Finished ---
+> Episode finished with 853 steps.
+> Mean step time:0.1093993960275583
+> Mean calc per step time: 0.038180533560991846
+> Rewards components:
+> velocity: 2.263906955718994 
+> trajectory: -31.65296173095703 
+> progress: 1.8041844367980957 
+> collision: 0.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 35 Finished ---
+> Episode finished with 1800 steps.
+> Mean step time:0.10767212329739534
+> Mean calc per step time: 0.021321814037706374
+> Rewards components:
+> velocity: 0.01872437447309494 
+> trajectory: -84.21973419189453 
+> progress: 0.0 
+> collision: 0.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 36 Finished ---
+> Episode finished with 0 steps.
+> Mean step time:0.0
+> Mean calc per step time: 0.0
+> Rewards components:
+> velocity: 0.0 
+> trajectory: 0.0 
+> progress: 0.0 
+> collision: 0.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 37 Finished ---
+> Episode finished with 1800 steps.
+> Mean step time:0.11050649803919901
+> Mean calc per step time: 0.021222848749240197
+> Rewards components:
+> velocity: 0.02745838463306427 
+> trajectory: -89.17569732666016 
+> progress: 3.1838538646698 
+> collision: 0.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 38 Finished ---
+> Episode finished with 0 steps.
+> Mean step time:0.0
+> Mean calc per step time: 0.0
+> Rewards components:
+> velocity: 0.0 
+> trajectory: 0.0 
+> progress: 0.0 
+> collision: 0.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 39 Finished ---
+> Episode finished with 1800 steps.
+> Mean step time:0.10949938963149271
+> Mean calc per step time: 0.021069658126915778
+> Rewards components:
+> velocity: 0.20933811366558075 
+> trajectory: -100.0309066772461 
+> progress: 1.2735415697097778 
+> collision: 0.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 40 Finished ---
+> Episode finished with 0 steps.
+> Mean step time:0.0
+> Mean calc per step time: 0.0
+> Rewards components:
+> velocity: 0.0 
+> trajectory: 0.0 
+> progress: 0.0 
+> collision: 0.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------
+
+--- Episode 41 Finished ---
+> Episode finished with 241 steps.
+> Mean step time:0.10901090625889046
+> Mean calc per step time: 0.07053543023826662
+> Rewards components:
+> velocity: 0.692241907119751 
+> trajectory: -15.797402381896973 
+> progress: 0.6367708444595337 
+> collision: -100.0 
+> timeout: 0.0 
+> destin: 0.0 
+-----------------------------------

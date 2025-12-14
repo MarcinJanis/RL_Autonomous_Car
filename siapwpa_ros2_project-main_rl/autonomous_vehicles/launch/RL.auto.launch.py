@@ -24,7 +24,11 @@ def generate_launch_description():
             '/model/vehicle_blue/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry',
             # '/world/mecanum_drive/model/track_model/link/track_link/sensor/walls_contact_sensor/contact@ros_gz_interfaces/msg/Contacts@gz.msgs.Contacts',
             '/world/mecanum_drive/model/vehicle_blue/link/chassis/sensor/chassis_contact_sensor/contact@ros_gz_interfaces/msg/Contacts@gz.msgs.Contacts',
+            '/ground_truth/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry'
             
+        ],
+        remappings=[
+            ('/ground_truth/odom', '/model/vehicle_blue/pose_ros')
         ],
         output='screen'
     )

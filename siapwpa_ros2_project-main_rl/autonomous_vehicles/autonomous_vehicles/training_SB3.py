@@ -30,7 +30,7 @@ EVAL_STEPS = 10000 # Evaluation after this amount of steps
 MAX_STEPS_PER_EPISODE = 1800 # Steps per episoed (max)
 TIME_STEP = 0.1 # [s]
 
-rewards =  { 'velocity': 1.0, 'trajectory': -0.2, 'prog': 1.0, 'collision': -10, 'timeout': -10, 'destin': 50 }
+rewards =  { 'velocity': 0.1, 'trajectory': -0.001, 'prog': 1, 'collision': -100, 'timeout': -100, 'destin': 100 }
 # velocity - reward for velocity to motive car to explore
 # trajectory - punishment for distance from desired trajectory 
 # collision - punishment for collision
@@ -57,7 +57,7 @@ wandb.login()
 run = wandb.init(
     project="RL_Autonomous_Car",
     entity="deep-neural-network-course",
-    name='RL_TestRun_4', # Name
+    name='RL_TestRun_9', # Name
     settings=wandb.Settings(save_code=False),
     config=config,
     sync_tensorboard=True,
