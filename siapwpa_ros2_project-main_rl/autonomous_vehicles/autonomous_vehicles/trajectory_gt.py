@@ -25,6 +25,8 @@ class traj_gt:
         self.x_start = 0
         self.y_start = 0
 
+        self.i_max_achieved = 0
+
     def setup(self, file_pth, n = 300):
         pts = np.loadtxt(file_pth, delimiter=',', skiprows=1)
         tck, u = splprep([pts[:,0], pts[:,1]], s=0.0, per=1)
@@ -40,31 +42,29 @@ class traj_gt:
         i_start = np.argmin(dx*dx + dy*dy)
         self.prog_prev = i_start * self.pt_dist
 
-    # def get_dist(self, x0, y0):
+
+    # def get_stats(self, x0, y0):
+
+    #     # find idx of actual point in spline
     #     dx = self.spline_pts[:,0] - x0
     #     dy = self.spline_pts[:,1] - y0
-    #     i = np.argmin(dx*dx + dy*dy)
-    #     xmin = self.spline_pts[i,0]
-    #     ymin = self.spline_pts[i,1]
-    #     dist = np.sqrt(dx[i]*dx[i] + dy[i]*dy[i])
+    #     i_act = np.argmin(dx*dx + dy*dy)
 
-    #     # -----
-    #     # xmin, y_min - punkty na spline,
+    #     # calc distance form traj
+    #     xmin = self.spline_pts[i_act,0]
+    #     ymin = self.spline_pts[i_act,1]
+    #     dist = np.sqrt(dx[i_act]*dx[i_act] + dy[i_act]*dy[i_act])
+
+    #     # calc progression
+    #     prog = i_act * self.pt_dist
+    #     prog_relative = prog - self.prog_prev
 
 
-
-    #     # # calc progress:
-
-    #     # prog_dx = xmin - self.prev_cast_x
-    #     # prog_dy = ymin - self.prev_cast_y
-    #     # prog = np.sqrt(prog_dx*prog_dx + prog_dy*prog_dy)
-
-    #     # # get progress:
-    #     # self.prev_cast_x = xmin
-    #     # self.prev_cast_y = ymin
-
-    #     return xmin, ymin, dist #, prog
-
+    #     # print(f'prev prog: {self.prog_prev} -> aact prog: {prog}')
+    #     self.prog_prev = prog
+    #     return xmin, ymin, dist, prog_relative
+    
+    # próba nowej definicji progresu
     def get_stats(self, x0, y0):
 
         # find idx of actual point in spline
@@ -72,13 +72,23 @@ class traj_gt:
         dy = self.spline_pts[:,1] - y0
         i_act = np.argmin(dx*dx + dy*dy)
 
+        L = 1 #ilość punktów do przewidywania do przodu
+        i_target = min(self.spline_pts.shape[0] - 1, i_act + L)
+
         # calc distance form traj
-        xmin = self.spline_pts[i_act,0]
-        ymin = self.spline_pts[i_act,1]
-        dist = np.sqrt(dx[i_act]*dx[i_act] + dy[i_act]*dy[i_act])
+        xmin = self.spline_pts[i_target,0]
+        ymin = self.spline_pts[i_target,1]
+        # dist = np.sqrt(dx[i_act]*dx[i_act] + dy[i_act]*dy[i_act])
+
+        dx_target = xmin - x0
+        dy_target = ymin - y0
+        dist = np.sqrt(dx_target*dx_target + dy_target*dy_target)
+
+        if i_act > self.i_max_achieved:
+            self.i_max_achieved = i_act
 
         # calc progression
-        prog = i_act * self.pt_dist
+        prog = self.i_max_achieved * self.pt_dist
         prog_relative = prog - self.prog_prev
 
 
@@ -222,8 +232,40 @@ class traj_gt:
                     self.x_start = x
                     self.y_start = y
                     self.prog_prev = idx * self.pt_dist
+                    self.i_max_achieved = idx
                     print(f'set start pt: {self.x_start}, {self.y_start}')
         return x, y, yaw
+    
+
+    def traj_save_csv(self, log_dir, episode_count, traj_override=None):
+
+        if traj_override is not None:
+            trajectory_data = traj_override
+        else:
+            trajectory_data = self.trajectory
+
+        if not trajectory_data:
+            print(f"[Warning] Episode {episode_count}: Trajectory data is empty, skipping CSV save.")
+            return
+
+        header = ['x', 'y', 'vx', 'vy']
+        
+        data_array = np.array(trajectory_data)
+
+        filename = os.path.join(log_dir, f'trajectory_data_{episode_count}.csv')
+
+        try:
+            np.savetxt(
+                filename,
+                data_array,
+                fmt='%.6f',
+                delimiter=',',
+                header=','.join(header),
+                comments=''
+            )
+            # print(f"[INFO] Trajectory data saved to: {filename}")
+        except Exception as e:
+            print(f"[ERROR] Failed to save trajectory CSV for episode {episode_count}: {e}")
 
 
 
