@@ -26,7 +26,7 @@ from wandb.integration.sb3 import WandbCallback
 ENV_PARALLEL = 1 # How many envornment shall work parallel during training
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 TOTAL_STEPS = 1000000 # Total steps
-EVAL_STEPS = 10000 # Evaluation after this amount of steps
+EVAL_STEPS = 1000 # Evaluation after this amount of steps
 MAX_STEPS_PER_EPISODE = 1800 # Steps per episoed (max)
 TIME_STEP = 0.1 # [s]
 
@@ -57,13 +57,13 @@ wandb.login()
 run = wandb.init(
     project="RL_Autonomous_Car",
     entity="deep-neural-network-course",
-    name='RL_TestRun_9', # Name
+    name='RL_TestRun_10', # Name
     settings=wandb.Settings(save_code=False),
     config=config,
     sync_tensorboard=True,
     monitor_gym=False,
     save_code=False,
-    mode='online'
+    mode='offline'
 )
 
 wandb_callback = WandbCallback(
@@ -175,12 +175,25 @@ class EnvEvalCallback(BaseCallback):
                 for k in range(n_episodes):
                     print(f'Episode {k}: rewards: {total_rewards[k]}')
 
+            # if mean_reward > self.best_mean_reward:
+            #     self.best_mean_reward = mean_reward
+            #     name = f"best_model_e{self.eval_cntr}"
+            #     self.model.save(os.path.join(self.log_dir, name))
+
+            #     print(f'[Eval] New best model save: {os.path.join(self.log_dir, name)}')
+
+
+            reward_str = f"{mean_reward:.2f}".replace('.', '_').replace('-', 'm')
+            
+            name = f"model_e{self.eval_cntr}_r{reward_str}"
+            save_path = os.path.join(self.log_dir, name)
+            
+            self.model.save(save_path)
+            print(f'[Eval] Model saved: {save_path}.zip')
+
             if mean_reward > self.best_mean_reward:
                 self.best_mean_reward = mean_reward
-                name = f"best_model_e{self.eval_cntr}"
-                self.model.save(os.path.join(self.log_dir, name))
-
-                print(f'[Eval] New best model save: {os.path.join(self.log_dir, name)}')
+                print(f'[Eval] New best reward: {self.best_mean_reward:.2f}')
  
             self.training_env.reset()
         return True
