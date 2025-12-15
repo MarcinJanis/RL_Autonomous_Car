@@ -1,0 +1,12 @@
+bridges:
+  - topic: /cmd_vel
+    type: geometry_msgs/msg/Twist
+    gz_type: gz.msgs.Twist
+
+  - topic: /world/mecanum_drive/model/vehicle_blue/link/camera_link/sensor/camera_sensor/image
+    type: sensor_msgs/msg/Image
+    gz_type: gz.msgs.Image
+
+  - topic: /world/mecanum_drive/model/vehicle_blue/link/lidar_link/sensor/lidar/scan
+    type: sensor_msgs/msg/LaserScan
+    gz_type: gz.msgs.LaserScan
