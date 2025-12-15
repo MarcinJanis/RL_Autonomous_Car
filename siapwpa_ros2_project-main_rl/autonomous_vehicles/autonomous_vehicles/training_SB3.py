@@ -153,7 +153,7 @@ if pretrained_model_pth is None:
     )
 
 else:
-    
+
     model = PPO.load(pretrained_model_pth)
 
 # Final Architecture visualization
@@ -164,6 +164,6 @@ print('-'*10)
 # Trening
 print('-'*10)
 print('Starting training')
-model.learn(total_timesteps=TOTAL_STEPS, callback=[wandb_callback1, wandb_callback1, eval_callback])
+model.learn(total_timesteps=TOTAL_STEPS, callback=[wandb_callback1, wandb_callback2, eval_callback])
 model.save("RL_Autonomous_Car_finalmodel_1.zip")
 run.finish()
