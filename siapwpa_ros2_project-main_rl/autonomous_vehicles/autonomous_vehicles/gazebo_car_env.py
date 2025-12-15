@@ -13,7 +13,7 @@ from sensor_msgs.msg import Image, LaserScan
 from nav_msgs.msg import Odometry
 from ros_gz_interfaces.msg import Contacts
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, PoseStamped, PoseArray
 
 from ros_gz_interfaces.srv import SetEntityPose
 from ros_gz_interfaces.msg import Entity
@@ -31,6 +31,7 @@ class GazeboCarEnv(gymnasium.Env):
     def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float, render_mode = True):
         super().__init__()
 
+   
         # calculation time estimation 
         self.temp_time_step_mean = 0 
         self.temp_time_calc_mean = 0 
@@ -68,6 +69,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.global_vel = np.zeros((3), dtype = np.float32)
 
         self.odom_received = False
+        self.vel_received = False
 
         # events flags
         self.collision_flag = False
@@ -101,7 +103,22 @@ class GazeboCarEnv(gymnasium.Env):
             10 # qos_profile_sensor_data
         )
 
-        self.pose_sub = self.node.create_subscription(
+        # self.pose_sub = self.node.create_subscription(
+        #     Odometry, 
+        #     "/model/vehicle_blue/odometry",
+        #     self._global_pose_cb,
+        #     10 # qos_profile_sensor_data
+        # )
+
+
+        # self.pose_sub = self.node.create_subscription(
+        #     PoseArray, 
+        #     "/model/vehicle_blue/pose", 
+        #     self._global_pose_cb,
+        #     10 # qos_profile_sensor_data
+        # )
+
+        self.odom_sub = self.node.create_subscription(
             Odometry, 
             "/model/vehicle_blue/odometry",
             self._global_pose_cb,
@@ -198,20 +215,46 @@ class GazeboCarEnv(gymnasium.Env):
        
     def _global_pose_cb(self, msg: Odometry):
         try:
-                self.global_pose = np.array([
-                    msg.pose.pose.position.x,
-                    msg.pose.pose.position.y
-                ])
+                if msg.header.frame_id == "world":
+                    self.global_pose = np.array([
+                        msg.pose.pose.position.x,
+                        msg.pose.pose.position.y
+                    ])
 
-                self.global_vel = np.array([
-                    msg.twist.twist.linear.x,
-                    msg.twist.twist.linear.y,
-                    msg.twist.twist.angular.z
-                ])
+                    self.global_vel = np.array([
+                        msg.twist.twist.linear.x,
+                        msg.twist.twist.linear.y,
+                        msg.twist.twist.angular.z
+                    ])
 
-                self.odom_received = True
+                    self.odom_received = True
         except Exception as e:
             self.node.get_logger().info(f"[Err] Cannot get data from odometry:\n{e}")
+
+
+    # def _global_pose_cb(self, msg: PoseArray):
+    #     try:
+    #             self.global_pose = np.array([
+    #                 msg.pose.position.x,
+    #                 msg.poses.position.y
+    #             ])
+    #             self.odom_received = True 
+    #     except Exception as e:
+    #         self.node.get_logger().info(f"[Err] Cannot get data from Pose (position):\n{e}")
+
+    # Callback dla Odometry (PRĘDKOŚCI)
+
+    # def _odometry_vel_cb(self, msg: Odometry):
+    #     try:
+    #             self.global_vel = np.array([
+    #                 msg.twist.twist.linear.x,
+    #                 msg.twist.twist.linear.y,
+    #                 msg.twist.twist.angular.z
+    #             ])
+    #             self.vel_received = True 
+    #     except Exception as e:
+    #         self.node.get_logger().info(f"[Err] Cannot get data from Odometry (velocity):\n{e}")
+
 
     def _collision_cb(self, msg: Contacts):
         # for c in msg.contacts:
@@ -279,6 +322,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.destination_reached_flag = False
         
         self.odom_received = False
+        self.vel_received = False
         self.camera_img = None
         self.laser = None
 
@@ -299,30 +343,30 @@ class GazeboCarEnv(gymnasium.Env):
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
         self.node.get_logger().info(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
 
-        old_pose = self.global_pose.copy() # Zapisujemy poprzednią pozycję odczytaną
+        # old_pose = self.global_pose.copy() # Zapisujemy poprzednią pozycję odczytaną
 
         self._teleport_car(x_st, y_st, yaw_st)
 
 
         # pętla synchronizacji
-        timeout_start = time.time()
-        max_wait_time = 5.0
-        pos_tolerance = 0.1
+        # timeout_start = time.time()
+        # max_wait_time = 5.0
+        # pos_tolerance = 0.1
         
-        while time.time() - timeout_start < max_wait_time:
-            rclpy.spin_once(self.node, timeout_sec=0.1) 
+        # while time.time() - timeout_start < max_wait_time:
+        #     rclpy.spin_once(self.node, timeout_sec=0.1) 
             
-            current_x, current_y = self.global_pose 
-            distance = np.sqrt((current_x - x_st)**2 + (current_y - y_st)**2)
+        #     current_x, current_y = self.global_pose 
+        #     distance = np.sqrt((current_x - x_st)**2 + (current_y - y_st)**2)
             
-            if distance < pos_tolerance:
-                self.node.get_logger().info(f"[Event] Odometry sync succes after teleport (Distance: {distance:.3f}m).")
-                break
+        #     if distance < pos_tolerance:
+        #         self.node.get_logger().info(f"[Event] Odometry sync succes after teleport (Distance: {distance:.3f}m).")
+        #         break
 
-        else:
-            self.node.get_logger().warn(f"[Warning] Odometry failed to sync within {max_wait_time}s. Proceeding with last known position: ({self.global_pose[0]:.2f}, {self.global_pose[1]:.2f}).")
+        # else:
+        #     self.node.get_logger().warn(f"[Warning] Odometry failed to sync within {max_wait_time}s. Proceeding with last known position: ({self.global_pose[0]:.2f}, {self.global_pose[1]:.2f}).")
         
-
+        obs = self._get_obs_blocking()
         
         x_start_sync, y_start_sync = self.global_pose
         vx_start_sync, vy_start_sync, ang_vz_start_sync = self.global_vel
@@ -445,10 +489,10 @@ class GazeboCarEnv(gymnasium.Env):
         return {"image": self.camera_img, "lidar": self.laser}
 
  
-    def _get_obs_blocking(self, timeout=2.0):
+    def _get_obs_blocking(self, timeout=8.0):
         waited = 0.0
         dt = 0.05
-        while (self.camera_img is None or self.laser is None or not self.odom_received) and waited < timeout:
+        while (self.camera_img is None or self.laser is None or not self.odom_received or not self.vel_received) and waited < timeout:
             rclpy.spin_once(self.node, timeout_sec=dt)
             waited += dt
         return self._get_obs()

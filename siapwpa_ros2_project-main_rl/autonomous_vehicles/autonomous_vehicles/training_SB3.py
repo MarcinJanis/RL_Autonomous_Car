@@ -27,7 +27,7 @@ from training_callbacks import wandb_callback_extra, EnvEvalCallback
 ENV_PARALLEL = 1 # How many envornment shall work parallel during training
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 TOTAL_STEPS = 1000000 # Total steps
-EVAL_STEPS = 10000 # Evaluation after this amount of steps
+EVAL_STEPS = 1000 # Evaluation after this amount of steps
 MAX_STEPS_PER_EPISODE = 1800 # Steps per episoed (max)
 TIME_STEP = 0.1 # [s]
 
@@ -60,13 +60,13 @@ wandb.login()
 run = wandb.init(
     project="RL_Autonomous_Car",
     entity="deep-neural-network-course",
-    name='RL_TestRun_9', # Name
+    name='RL_TestRun_10', # Name
     settings=wandb.Settings(save_code=False),
     config=config,
     sync_tensorboard=True,
     monitor_gym=False,
     save_code=False,
-    mode='online'
+    mode='offline'
 )
 
 # --- Init Environment ---
