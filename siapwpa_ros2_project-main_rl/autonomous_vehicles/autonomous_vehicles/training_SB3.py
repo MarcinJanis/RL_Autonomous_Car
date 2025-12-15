@@ -153,8 +153,13 @@ if pretrained_model_pth is None:
     )
 
 else:
-
-    model = PPO.load(pretrained_model_pth)
+    print(f"Loading model from: {pretrained_model_pth}")
+    model = PPO.load(
+        pretrained_model_pth, 
+        env=vec_env, 
+        device=DEVICE,
+        tensorboard_log=f"runs/{run.id}" 
+    )
 
 # Final Architecture visualization
 print("--- Architecture: ---")
