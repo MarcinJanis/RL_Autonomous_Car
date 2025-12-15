@@ -420,7 +420,6 @@ class GazeboCarEnv(gymnasium.Env):
             traj_override=self.last_episode_traj,
             vel_override=self.last_episode_vel
         )
-        
         self.trajectory.traj_save_csv(
             self.LOG_DIR,
             self.episode_count,
