@@ -91,7 +91,6 @@ class traj_gt:
         prog = self.i_max_achieved * self.pt_dist
         prog_relative = prog - self.prog_prev
 
-
         # print(f'prev prog: {self.prog_prev} -> aact prog: {prog}')
         self.prog_prev = prog
         return xmin, ymin, dist, prog_relative
@@ -107,7 +106,6 @@ class traj_gt:
     #     self.prev_cast_x = 0
     #     self.prev_cast_y = 0
 
-
     def add2trajectory(self, global_pose):
         x, y, vx, vy = global_pose
         self.trajectory.append((x, y))
@@ -116,8 +114,6 @@ class traj_gt:
     def visu_reset(self):
         self.trajectory = []
         self.velocity = []
-
-
 
     def get_trajectory(self):
         if not self.trajectory:
@@ -134,10 +130,6 @@ class traj_gt:
     def get_gt(self):
         gt = np.array(self.spline_pts)
         return gt
-
-
-
-
 
     def visu_show(self):
         traj_pts = self.get_trajectory()
@@ -275,58 +267,3 @@ class traj_gt:
 
 
 
-
-# gt = traj_gt()
-
-# print(gt.check_if_dest_reached(-8, 17, fin_line_o = (-9.12, 14.61), fin_line_i = (-4.4, 14.61), y_offset = 0.5))
-
-
-# gt.add2trajectory((-1, 5, 0, 0))
-# gt.add2trajectory((2, 3,0,0))
-# # gt.visu_show()
-
-
-# # how to use:
-
-# # Save data to csv
-
-# gt = traj_gt()
-# trajectory_points_pth = './siapwpa_ros2_project-main_rl/models/walls/waypoints_il_srodek.csv'
-# gt.setup(trajectory_points_pth, n=100)
-# gt.add2trajectory((-1, 5, 0, 0))
-# gt.add2trajectory((2, 3,0,0))
-# # gt.visu_show()
-# # gt.visu_save('./siapwpa_ros2_project-main_rl/models/walls',500)
-# gt.traj_save('./siapwpa_ros2_project-main_rl/models/walls',500)
-
-
-# Get Distance
-# gt = traj_gt()
-# trajectory_points_pth = './siapwpa_ros2_project-main_rl/models/walls/waypoints_il_srodek.csv'
-# gt.setup(trajectory_points_pth, n=300)
-
-# x, y, yaw = gt.new_rand_pt()
-
-# # x = x + 1
-# # y = y + 1.5
-
-# print(f'pt1: {x}, {y}')
-# gt.add2trajectory((x, y, 0, 0))
-# # xmin, ymin, dist, _ = dist_val = gt.get_dist(x, y)
-# # gt.add2trajectory((xmin, ymin, 0, 0))
-
-# x2 = x + 3
-# y2 = y + 2
-# gt.add2trajectory((x2, y2, 0, 0))
-# print(f'pt2: {x2}, {y2}')
-
-# print('first progression')
-# xmin, ymin, dist, prog = gt.get_stats(x2, y2)
-# # print(f'pt2 cast for: {xmin}, {ymin}')
-# gt.add2trajectory((xmin, ymin, 0, 0))
-
-# print(f'progression: {prog}')
-# gt.visu_show()
-
-
-# print(f'dist between:X({pt[0]}, {xmin}),Y({pt[1]},{ymin}): {dist}')
