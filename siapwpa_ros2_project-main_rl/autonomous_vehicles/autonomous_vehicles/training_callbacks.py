@@ -1,4 +1,6 @@
 from stable_baselines3.common.callbacks import EvalCallback, BaseCallback
+import numpy as np
+import os
 
 class wandb_callback_extra(BaseCallback):
     def _on_step(self):
@@ -55,12 +57,27 @@ class EnvEvalCallback(BaseCallback):
                 for k in range(n_episodes):
                     print(f'Episode {k}: rewards: {total_rewards[k]}')
 
+            # if mean_reward > self.best_mean_reward:
+            #     self.best_mean_reward = mean_reward
+            #     name = f"best_model_e{self.eval_cntr}"
+            #     self.model.save(os.path.join(self.log_dir, name))
+
+            #     print(f'[Eval] New best model save: {os.path.join(self.log_dir, name)}')
+ 
+            # self.training_env.reset()
+
+
+            reward_str = f"{mean_reward:+.2f}".replace('.', '_').replace('+', 'p').replace('-', 'm')
+            
+            name = f"model_e{self.eval_cntr}_r{reward_str}" 
+            save_path = os.path.join(self.log_dir, name)
+            
+            self.model.save(save_path)
+            print(f'[Eval] Model saved: {save_path}')
+            
             if mean_reward > self.best_mean_reward:
                 self.best_mean_reward = mean_reward
-                name = f"best_model_e{self.eval_cntr}"
-                self.model.save(os.path.join(self.log_dir, name))
+                print(f'[Eval] **New BEST model found!** Current Best Mean Reward: {self.best_mean_reward:.2f}')
 
-                print(f'[Eval] New best model save: {os.path.join(self.log_dir, name)}')
- 
             self.training_env.reset()
         return True
