@@ -27,8 +27,8 @@ from training_callbacks import wandb_callback_extra, EnvEvalCallback
 ENV_PARALLEL = 1 # How many envornment shall work parallel during training
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 TOTAL_STEPS = 1000000 # Total steps
-EVAL_STEPS = 1000 # Evaluation after this amount of steps
-MAX_STEPS_PER_EPISODE = 1800 # Steps per episoed (max)
+EVAL_STEPS = 10000 # Evaluation after this amount of steps
+MAX_STEPS_PER_EPISODE = 1500 # Steps per episoed (max)
 TIME_STEP = 0.1 # [s]
 
 rewards =  { 'velocity': 0.1, 'trajectory': -0.001, 'prog': 1, 'collision': -100, 'timeout': -100, 'destin': 100 }
@@ -40,7 +40,7 @@ rewards =  { 'velocity': 0.1, 'trajectory': -0.001, 'prog': 1, 'collision': -100
 
 trajectory_goal = '/home/developer/ros2_ws/src/models/walls/waypoints_prawy_srodek.csv'
 
-pretrained_model_pth = 'path' # set to None if init model from zero 
+pretrained_model_pth = '/home/developer/ros2_ws/src/autonomous_vehicles/models/test_run9/best_model_e5.zip' # set to None if init model from zero 
 
 # boundaries for car
 max_linear_velocity = 3.0
@@ -66,7 +66,7 @@ run = wandb.init(
     sync_tensorboard=True,
     monitor_gym=False,
     save_code=False,
-    mode='offline'
+    mode='online'
 )
 
 # --- Init Environment ---
