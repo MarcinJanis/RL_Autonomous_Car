@@ -222,8 +222,12 @@ class traj_gt:
         return goal_reached
 
 
-    def new_rand_pt(self, set_start_pt = True):
-        idx = random.randint(0, int(0.8 * self.spline_pts.shape[0]))
+    def new_rand_pt(self, set_start_pt = True, eval= False):
+        if eval:
+            idx = 473
+        else:
+            idx = random.randint(0, int(0.8 * self.spline_pts.shape[0]))
+
         # ensure that car will have to through 20% of map
         x, y = self.spline_pts[idx, :] # spawn point
         x_n, y_n = self.spline_pts[idx + 1, :] # next point

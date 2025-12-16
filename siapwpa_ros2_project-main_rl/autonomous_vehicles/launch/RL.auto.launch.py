@@ -6,12 +6,12 @@ import os
 
 def generate_launch_description():
     world_path = "/home/developer/ros2_ws/src/models/walls/mecanum.sdf"
-    training_script_path = "/home/developer/ros2_ws/src/autonomous_vehicles/autonomous_vehicles/training_SB3.py"
+    training_script_path = "/home/developer/ros2_ws/src/autonomous_vehicles/autonomous_vehicles/training/training_SB3.py"
     working_dir = "/home/developer/ros2_ws/src/autonomous_vehicles"
 
     gz_sim_world = ExecuteProcess(
-        # cmd=["gz", "sim", world_path, "-r"],
-        cmd=["gz", "sim", world_path, "-s", "-r"],
+        cmd=["gz", "sim", world_path, "-r"],
+        # cmd=["gz", "sim", world_path, "-s", "-r"],
         output="screen"
     )    
 

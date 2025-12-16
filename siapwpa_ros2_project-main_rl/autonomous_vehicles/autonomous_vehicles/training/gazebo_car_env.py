@@ -28,9 +28,10 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 class GazeboCarEnv(gymnasium.Env):
 
-    def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float, render_mode = True):
+    def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float, render_mode = True, eval = False):
         super().__init__()
 
+        self.is_eval_env = eval
    
         # calculation time estimation 
         self.temp_time_step_mean = 0 
@@ -265,8 +266,10 @@ class GazeboCarEnv(gymnasium.Env):
         #     self.collision_flag = False
 
     # ------------- GYM API ------------- #
-    def reset(self, *, seed=None, options=None):
+    def reset(self, *, seed=None, options=None, eval = None):
         super().reset(seed=seed)
+
+        current_eval_mode = eval if eval is not None else self.is_eval_env
 
         # stop robot
         # self._start_gz()
@@ -340,7 +343,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.trajectory.visu_reset()
 
         # put on random posiition:
-        x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
+        x_st, y_st, yaw_st = self.trajectory.new_rand_pt(eval=current_eval_mode)
         self.node.get_logger().info(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
 
         # old_pose = self.global_pose.copy() # Zapisujemy poprzednią pozycję odczytaną
