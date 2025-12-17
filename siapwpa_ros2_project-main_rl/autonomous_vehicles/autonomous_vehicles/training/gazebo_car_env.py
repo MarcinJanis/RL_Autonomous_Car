@@ -60,7 +60,7 @@ class GazeboCarEnv(gymnasium.Env):
                          )
         # self.set_state_client = self.node.create_client(SetEntityPose, '/world/mecanum_drive/set_pose')
         
-        # --- bridge for camera and lidar ---
+        # --- bridge for sensors ---
         self.bridge = CvBridge()
 
         # --- state variables ---
@@ -335,6 +335,12 @@ class GazeboCarEnv(gymnasium.Env):
         self.step_count = 0
         self.collision_flag = False
         self.timeout_flag = False
+
+        # change dir for next episode
+        if self.episode_count % 2 == 0: 
+            self.trajectory.change_dir(clkwise = False)
+        else:
+            self.trajectory.change_dir(clkwise = True)
 
         self.node.get_logger().info(f"[Episode|{self.episode_count}] Episode start") 
 

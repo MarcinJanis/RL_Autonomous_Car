@@ -33,8 +33,8 @@ class traj_gt:
         self.tck = tck
         ts = np.linspace(0, 1, n)
         xs, ys = splev(ts, self.tck)
-        self.spline_pts = np.column_stack((xs, ys))
-
+        self.spline_pts_base = np.column_stack((xs, ys))
+        self.spline_pts = self.spline_pts_base
         self.pt_dist = np.sqrt(((self.spline_pts[0,0])-(self.spline_pts[1,0]))**2 + ((self.spline_pts[0,1])-(self.spline_pts[1,1]))**2)
 
         dx = self.spline_pts[:,0] - self.x_start
@@ -65,6 +65,13 @@ class traj_gt:
     #     return xmin, ymin, dist, prog_relative
     
     # próba nowej definicji progresu
+    def change_dir(self, clkwise = False):
+        if clkwise: 
+            self.spline_pts = self.spline_pts_base[::-1,:]
+        else: 
+            self.spline_pts = self.spline_pts_base
+
+
     def get_stats(self, x0, y0):
 
         # find idx of actual point in spline
