@@ -9,7 +9,7 @@ import sys
 sys.path.append('/home/developer/ros2_ws/src/autonomous_vehicles/autonomous_vehicles')
 # --Parameters ---
 
-V_lin_max = 5.0
+V_lin_max = 6.5
 V_ang_max = 2.0
 step_time = 0.1 # [s] Update frequency -> the same as in training
 # model_pth = '/home/developer/ros2_ws/src/autonomous_vehicles/models/test_run10/model_e22_rp168_99.zip' # trained for v=3m/s,

@@ -751,12 +751,26 @@
         <width>256</width>
         <height>256</height>
         <format>R8G8B8</format>
+
+        
+
+      <!-- sensor noise -->
+      <!-- <noise>
+        <type>gaussian</type>
+        <mean>5.0</mean>
+        <stddev>3.0</stddev>
+      </noise> -->
+
+
+
       </image>
       <clip>
         <near>0.1</near>
         <far>100</far>
       </clip>
+
     </camera>
+   
   </sensor>
 </link>
 
@@ -797,10 +811,23 @@
       <min>0.2</min>
       <max>12.0</max>
       <resolution>0.01</resolution>
+
+      <!-- sensor noise-->
+      <!-- <noise>
+        <type>gaussian</type>
+        <mean>0.5</mean>
+        <stddev>0.2</stddev>
+      </noise> -->
+
+
+
+
+
     </range>
   </ray>
   <always_on>true</always_on>
   <update_rate>20</update_rate>
+
 </sensor>
 
 </link>
