@@ -10,8 +10,8 @@ def generate_launch_description():
     working_dir = "/home/developer/ros2_ws/src/autonomous_vehicles"
 
     gz_sim_world = ExecuteProcess(
-        # cmd=["gz", "sim", world_path, "-r"],
-        cmd=["gz", "sim", world_path, "-s", "-r"],
+        cmd=["gz", "sim", world_path, "-r"],
+        # cmd=["gz", "sim", world_path, "-s", "-r"],
         output="screen"
     )    
 

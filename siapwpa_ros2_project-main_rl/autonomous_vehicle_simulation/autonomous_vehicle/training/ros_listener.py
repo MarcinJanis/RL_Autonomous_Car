@@ -70,6 +70,11 @@ class SensorVisualizer(Node):
         
         # Przetwarzanie punktów LiDARa
         ranges = np.array(msg.ranges)
+
+        # lidar noise
+        p = 0.007
+        mask = np.random.rand(ranges.size) < p
+        ranges[mask] = np.random.uniform(msg.range_min, msg.range_max, mask.sum())
         
         # Filtrujemy 'inf' (nieskończoność) i błędne pomiary
         valid_indices = np.where((ranges > msg.range_min) & (ranges < msg.range_max))[0]

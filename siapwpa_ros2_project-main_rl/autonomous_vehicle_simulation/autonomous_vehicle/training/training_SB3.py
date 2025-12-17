@@ -47,7 +47,7 @@ rewards =  { 'velocity': 0.1, 'trajectory': -0.1, 'prog': 1, 'collision': -100, 
 
 trajectory_goal = '/home/developer/ros2_ws/src/models/walls/waypoints_prawy_srodek.csv'
 
-pretrained_model_pth = '/home/developer/ros2_ws/src/autonomous_vehicles/models/test_run10/model_e22_rp168_99.zip' # set to None if init model from zero 
+pretrained_model_pth = '/home/developer/ros2_ws/src/autonomous_vehicles/models/test_run11/model_e13_rp163_15.zip' # set to None if init model from zero 
 
 # boundaries for car
 max_linear_velocity = 6.0
@@ -73,8 +73,8 @@ run = wandb.init(
     sync_tensorboard=True,
     monitor_gym=False,
     save_code=False,
-    mode='online'
-    # mode='offline'
+    # mode='online'
+    mode='offline'
 )
 
 # --- Init Environment ---

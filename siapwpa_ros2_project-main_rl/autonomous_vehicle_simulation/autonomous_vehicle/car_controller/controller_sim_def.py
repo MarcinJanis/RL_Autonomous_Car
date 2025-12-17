@@ -99,9 +99,21 @@ class CarController(Node):
 
     def _lidar_cb(self, msg: LaserScan):
         try:
-            self.lidar_scan = np.array(msg.ranges, dtype=np.float32)
-            self.lidar_scan = np.clip(self.lidar_scan, 0.0, self.lidar_max_range) # clip 
-            self.lidar_scan = self.lidar_scan / self.lidar_max_range
+            # self.lidar_scan = np.array(msg.ranges, dtype=np.float32)
+            # self.lidar_scan = np.clip(self.lidar_scan, 0.0, self.lidar_max_range) # clip 
+            # self.lidar_scan = self.lidar_scan / self.lidar_max_range
+
+
+
+            scan = np.array(msg.ranges, dtype=np.float32)
+
+            p = 0.007
+            mask = (np.random.rand(scan.size) < p)
+            scan[mask] = np.random.uniform(0.0, self.lidar_max_range, size=mask.sum()).astype(np.float32)
+
+            scan = np.clip(scan, 0.0, self.lidar_max_range)
+            self.lidar_scan = scan / self.lidar_max_range
+
         except Exception as e:
             self.get_logger().warn(f"[Err] Cannot get data from lidaer:\n{e}")
 

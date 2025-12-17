@@ -209,9 +209,20 @@ class GazeboCarEnv(gymnasium.Env):
 
     def _lidar_cb(self, msg: LaserScan):
         try:
-            self.laser = np.array(msg.ranges, dtype=np.float32)
-            self.laser = np.clip(self.laser, 0.0, self.laser_range) # clip 
-            self.laser = self.laser / self.laser_range
+            # self.laser = np.array(msg.ranges, dtype=np.float32)
+            # self.laser = np.clip(self.laser, 0.0, self.laser_range) # clip 
+            # self.laser = self.laser / self.laser_range
+
+
+            ranges = np.array(msg.ranges, dtype=np.float32)
+            p_spike = 0.007
+            mask = np.random.rand(ranges.size) < p_spike
+            ranges[mask] = np.random.uniform(msg.range_min, msg.range_max, size=mask.sum()).astype(np.float32)
+            
+            ranges = np.clip(ranges, 0.0, self.laser_range)
+            self.laser = ranges / self.laser_range
+
+
         except Exception as e:
             self.node.get_logger().info(f"[Err] Cannot get data from lidaer:\n{e}")
        
