@@ -8,9 +8,14 @@ from sensor_msgs.msg import Image, LaserScan
 from nav_msgs.msg import Odometry
 from ros_gz_interfaces.msg import Contacts
 
+import time 
+
 class CarController(Node):
-    def __init__(self, Vmax_lin, Vmax_ang, lidar_max_range = 12, lidar_n_beans = 280):
+    def __init__(self, step_time, Vmax_lin, Vmax_ang, lidar_max_range = 12, lidar_n_beans = 280):
         super().__init__('rl_car_controller')
+        # --- Node timer --- #
+        self.timer = self.create_timer(step_time, self.step)
+
         # --- model --- #
         self.model = None
 
@@ -33,10 +38,15 @@ class CarController(Node):
         self.collisions = []
         self.mem_sample_max = 200
 
-        self.map_pts = np.loadtxt('./siapwpa_ros2_project-main_rl/autonomous_vehicles/autonomous_vehicles/car_controller/data/map.csv', delimiter=',', dtype=float, skiprows = 1)
+        self.map_pts = np.loadtxt('/home/developer/ros2_ws/src/autonomous_vehicles/autonomous_vehicles/car_controller/data/map.csv', delimiter=',', dtype=float, skiprows = 1)
     
         self.collision_event = False
+        self.full_lap_event = False
+        self.full_lap_prev_event = False
 
+        self.start_time = 0.0
+        self.act_lap_time = 0.0
+        self.best_lap_time = float(np.inf)
 
         # --- ROS subscribers --- #
         self.bridge = CvBridge() # create birdge object 
@@ -84,7 +94,7 @@ class CarController(Node):
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             self.camera_img = img
         except Exception as e:
-            print(f"[Err] Cannot get data from camera:\n{e}")
+            self.get_logger().warn(f"[Err] Cannot get data from camera:\n{e}")
 
 
     def _lidar_cb(self, msg: LaserScan):
@@ -93,20 +103,20 @@ class CarController(Node):
             self.lidar_scan = np.clip(self.lidar_scan, 0.0, self.lidar_max_range) # clip 
             self.lidar_scan = self.lidar_scan / self.lidar_max_range
         except Exception as e:
-            print(f"[Err] Cannot get data from lidaer:\n{e}")
+            self.get_logger().warn(f"[Err] Cannot get data from lidaer:\n{e}")
 
     def _global_pose_cb(self, msg: Odometry):
         try:
             if msg.header.frame_id == "world":
-                self.pose = ((msg.pose.pose.position.x, msg.pose.pose.position.y))
-                self.vel = ((msg.twist.twist.linear.x, msg.twist.twist.angular.z))  
+                self.pose_act = ((msg.pose.pose.position.x, msg.pose.pose.position.y))
+                self.vel_act = ((msg.twist.twist.linear.x, msg.twist.twist.angular.z))  
         except Exception as e:
-            print(f"[Err] Cannot get data from odometry:\n{e}")
+            self.get_logger().warn(f"[Err] Cannot get data from odometry:\n{e}")
 
     def _collision_cb(self, msg: Contacts):
         if len(msg.contacts) > 0:
             self.collision_event = True
-            print(f"[Event] Collision!")
+            self.get_logger().warn(f"[Event] Collision!")
     
     def _send_cmd(self, v, w):
         msg = Twist()
@@ -122,7 +132,7 @@ class CarController(Node):
 
     def act(self):
         if self.camera_img is None or self.lidar_scan is None:
-            self.get_logger().warn("[Warning] Witing for sensors data...")
+            self.get_logger().warn("[Warning] Waiting for sensors data...")
             return
         
         obs = {"image": self.camera_img, "lidar": self.lidar_scan}
@@ -145,6 +155,36 @@ class CarController(Node):
         if not self.mem_sample_max is None:
             if len(self.trajectory) > self.mem_sample_max: self.trajectory.pop(0)
             if len(self.velocity) > self.mem_sample_max: self.velocity.pop(0)
+
+    def check_if_dest_reached(self, x, y, fin_line_o = (-9.12, 15), fin_line_i = (-4.4, 15), y_offset = 0.5):
+        # check x coords
+        goal_reached = False
+        if x > fin_line_o[0] and x < fin_line_i[0]:
+            # check y coords with offset
+            if y > fin_line_i[1] - y_offset and y < fin_line_i[1] + y_offset:
+                goal_reached = True
+        return goal_reached
+
+    def step(self):
+        self.act() # Get obs, inference, send control cmd
+        if not self.pose_act == (0.0, 0.0):
+            self.log() # log additional data 
+            self.visu(speed_grad=True, draw_collision=True) # visualisation
+
+        # calc lap's time
+        self.full_lap_event = self.check_if_dest_reached(self.pose_act[0], self.pose_act[1])
+
+        if self.full_lap_event and not self.full_lap_prev_event:
+            self.act_lap_time = time.time() - self.start_time
+            if self.act_lap_time < self.best_lap_time:
+                self.best_lap_time = self.act_lap_time  
+            # self.full_lap_prev_event = False
+            # self.full_lap_event = False
+            self.start_time = time.time()
+        self.full_lap_prev_event = self.full_lap_event
+        # self.start_time = 0.0
+        # self.act_lap_time = 0.0
+        # self.best_lap_time = 0.0
 
 
     def visu(self, speed_grad=True, draw_collision = True):
@@ -189,7 +229,7 @@ class CarController(Node):
         # road, lines
         cv2.polylines(canvas, [np.array(pts_in)], False, (255, 255, 255), 1)
         cv2.polylines(canvas, [np.array(pts_out)], False, (255, 255, 255), 1)
-        cv2.polylines(canvas, [np.array(pts_center)], False, (0, 255, 255), 1) # Żółta przerywana (tutaj ciągła)
+        cv2.polylines(canvas, [np.array(pts_center)], False, (0, 255, 255), 1) 
         # finish line
         p1 = _to_pix(-4, 15)
         p2 = _to_pix(-9.8, 15)
@@ -200,10 +240,10 @@ class CarController(Node):
         
         if speed_grad and len(self.velocity) > 0:
             vels = np.array(self.velocity)[:, 0] 
-            v_min, v_max = vels.min(), vels.max()
+            # v_min, v_max = vels.min(), vels.max()
             
-            if v_max - v_min == 0: div = 1  # to avoid div with 0
-            else: div = v_max - v_min
+            if self.Vmax_lin == 0: div = 1  # to avoid div with 0
+            else: div = self.Vmax_lin
 
             # Draw lines with segments
             for i in range(len(traj_pixels) - 1):
@@ -211,7 +251,7 @@ class CarController(Node):
                 pt2 = traj_pixels[i+1]
                 
                 curr_v = vels[i]
-                norm_v = (curr_v - v_min) / div
+                norm_v = curr_v / div
                 
                 hue = int((1 - norm_v) * 120) 
 
@@ -228,14 +268,28 @@ class CarController(Node):
         # --- draw collision ---
         if draw_collision:
             for pt in self.collisions:
-                cv2.circle(canvas, _to_pix(pt[0], pt[1]), 5, (100, 255, 100), -1)
+                cv2.circle(canvas, _to_pix(pt[0], pt[1]), 10, (255, 0, 255), 1)
+
+        # --- draw car ---
+        if len(traj_pixels) > 3:
+            cv2.arrowedLine(
+                            canvas,
+                            traj_pixels[-3],
+                            traj_pixels[-1],
+                            (255, 255, 255),
+                            4,
+                            tipLength=0.2
+            )
 
         # --- Show ---
-        # add velocity info text
+        # add velocity and time info text
         if len(self.velocity) > 0:
             v_now = self.velocity[-1][0]
-            cv2.putText(canvas, f"V: {v_now:.2f} m/s", (20, 40), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            cv2.putText(canvas, f"V: {v_now:.2f} [m/s]", (20, 40), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
+            
+            cv2.putText(canvas, f"last lap: {self.act_lap_time:.2f} [s], best lap: {self.best_lap_time:.2f} [s]", (280, 40), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
 
         cv2.imshow("Trajectory", canvas)
         cv2.waitKey(1) 

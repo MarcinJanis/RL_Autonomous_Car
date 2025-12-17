@@ -33,7 +33,7 @@ from training_callbacks import wandb_callback_extra, EnvEvalCallback
 ENV_PARALLEL = 1 # How many envornment shall work parallel during training
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 TOTAL_STEPS = 1000000 # Total steps
-EVAL_STEPS = 100 # Evaluation after this amount of steps
+EVAL_STEPS = 10000 # Evaluation after this amount of steps
 MAX_STEPS_PER_EPISODE = 1500 # Steps per episoed (max)
 TIME_STEP = 0.1 # [s]
 
@@ -73,7 +73,8 @@ run = wandb.init(
     sync_tensorboard=True,
     monitor_gym=False,
     save_code=False,
-    mode='offline'
+    mode='online'
+    # mode='offline'
 )
 
 # --- Init Environment ---
@@ -100,11 +101,13 @@ env_id = lambda: gazebo_env(time_step = TIME_STEP,
                             max_lin_vel = max_linear_velocity,
                             max_ang_vel = max_angular_velocity,
                             render_mode=True,
-                            eval=eval)
+                            )
 
 # Evaluation callback
 
-vec_env = make_vec_env(lambda: env_id(eval= False), n_envs=ENV_PARALLEL)
+# vec_env = make_vec_env(lambda: env_id(eval= False), n_envs=ENV_PARALLEL)
+vec_env = make_vec_env(env_id, n_envs=ENV_PARALLEL)
+
 # -> Faster trainging (GPU waits until simulation ennds on CPU, its better to use all of available CPU threads 
 # -> More stable training (when model learns based on one simulation, step t and t+1 are really similar. When more simulation are used during one learning step, data are more diverse, this leads to better problem generalisation).
 

@@ -3,13 +3,19 @@ from stable_baselines3 import PPO
 import rclpy
 
 import time 
+import sys
 
+
+sys.path.append('/home/developer/ros2_ws/src/autonomous_vehicles/autonomous_vehicles')
 # --Parameters ---
 
-V_lin_max = 3.0
+V_lin_max = 5.0
 V_ang_max = 2.0
-update_time = 0.1 # [s] Update frequency -> the same as in training
-model_pth = ''
+step_time = 0.1 # [s] Update frequency -> the same as in training
+# model_pth = '/home/developer/ros2_ws/src/autonomous_vehicles/models/test_run10/model_e22_rp168_99.zip' # trained for v=3m/s,
+model_pth = '/home/developer/ros2_ws/src/autonomous_vehicles/models/test_run11/model_e13_rp163_15.zip' # trained for v=6m/s, (good result for v_lin 6.5, v_ang 2.0, drift for v_lin 8.0, v_ang 2.0)
+
+
   
 # ----------------
 
@@ -18,10 +24,7 @@ def main(args=None):
     rclpy.init(args=args)
 
     # create controller
-    Controller = CarController(Vmax_lin = V_lin_max, Vmax_ang = V_ang_max, lidar_max_range = 12, lidar_n_beans = 280, mem_sample_max = 200)
-
-    # create timer for controller update frequency 
-    rate = Controller.create_rate(1/update_time) # takes time of additional computing into account when waiting
+    Controller = CarController(step_time = step_time, Vmax_lin = V_lin_max, Vmax_ang = V_ang_max, lidar_max_range = 12, lidar_n_beans = 280)
 
     try:
         model = PPO.load(model_pth)
@@ -31,15 +34,12 @@ def main(args=None):
         print(f"[Error] Error during model importing: {e}")
         return
 
+
+    Controller.start_time = time.time() # set start time 
+
     try:
         # --- Main loop ---
-        while rclpy.ok():
-            rclpy.spin_once(Controller, timeout_sec=0.001)
-            Controller.act() # Get obs, inference, send control cmd
-            Controller.log() # log additional data 
-            Controller.visu(speed_grad=True, draw_collision=True) # visualisation
-            rate.sleep()
-
+        rclpy.spin(Controller)
     except KeyboardInterrupt:
         print("Keybord interput. Closing...")
     finally:

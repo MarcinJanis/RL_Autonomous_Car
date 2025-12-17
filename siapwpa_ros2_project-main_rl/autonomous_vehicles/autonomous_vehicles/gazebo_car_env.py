@@ -28,11 +28,9 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 class GazeboCarEnv(gymnasium.Env):
 
-    # def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float, render_mode = True, eval = False):
     def __init__(self, time_step : float , rewards: dict, trajectory_points_pth: str, max_steps_per_episode: int, max_lin_vel: float, max_ang_vel: float, render_mode = True):
         super().__init__()
 
-        # self.is_eval_env = eval
    
         # calculation time estimation 
         self.temp_time_step_mean = 0 
@@ -267,11 +265,8 @@ class GazeboCarEnv(gymnasium.Env):
         #     self.collision_flag = False
 
     # ------------- GYM API ------------- #
-    # def reset(self, *, seed=None, options=None, eval = None):
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
-
-        # current_eval_mode = eval if eval is not None else self.is_eval_env
 
         # stop robot
         # self._start_gz()
@@ -345,7 +340,6 @@ class GazeboCarEnv(gymnasium.Env):
         self.trajectory.visu_reset()
 
         # put on random posiition:
-        # x_st, y_st, yaw_st = self.trajectory.new_rand_pt(eval=current_eval_mode)
         x_st, y_st, yaw_st = self.trajectory.new_rand_pt()
         self.node.get_logger().info(f"> Starting from new pos: x =  {x_st}, y = {y_st}, yaw = {yaw_st}") 
 
@@ -380,9 +374,7 @@ class GazeboCarEnv(gymnasium.Env):
         self.trajectory.add2trajectory((x_start_sync, y_start_sync, vx_start_sync, vy_start_sync))
         self.node.get_logger().info(f"[Debug] Trajectory start point added: ({x_start_sync:.2f}, {y_start_sync:.2f}).")
         
-        
-        obs = self._get_obs_blocking()
-        self.node.get_logger().info(f"> [Debug] Real new pos: x =  {self.global_pose[0]}, y = {self.global_pose[1]}") 
+        self.node.get_logger().info(f"> pDebug] Real new pos: x =  {self.global_pose[0]}, y = {self.global_pose[1]}") 
         # self._stop_gz()
 
         self.t2 = time.time()
@@ -470,6 +462,7 @@ class GazeboCarEnv(gymnasium.Env):
             traj_override=self.last_episode_traj,
             vel_override=self.last_episode_vel
         )
+        
         self.trajectory.traj_save_csv(
             self.LOG_DIR,
             self.episode_count,

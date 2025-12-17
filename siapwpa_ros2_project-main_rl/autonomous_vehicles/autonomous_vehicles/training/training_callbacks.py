@@ -31,8 +31,8 @@ class EnvEvalCallback(BaseCallback):
             for i in range(n_episodes):
                 done = False
                 episode_reward = 0.0
-                # obs = self.training_env.reset() # reset env
-                obs = self.training_env.env_method('reset', eval=True)[0]
+                obs = self.training_env.reset() # reset env
+                # obs = self.training_env.env_method('reset', eval=True)[0]
 
                 while not done:
                     action, _ = self.model.predict(obs, deterministic=True)
