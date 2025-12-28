@@ -275,5 +275,20 @@ class traj_gt:
 
 
 
+    def new_rand_pt_obstacle(self):
+        r = 2.25 # distance between centers of left and right lines
+        idx = random.randint(0, int(0.8 * self.spline_pts.shape[0]))
+        x, y = self.spline_pts[idx, :] # spawn point
 
+        line = random.randint(0, 1)
+        if line == 0: # right line
+            return x, y
+        else: # move to left line
+            x_n, y_n = self.spline_pts[idx + 1, :] # next point
+            yaw = np.arctan2(y_n - y, x_n - x) # yaw [rad]
+            yaw += np.pi/2 # or -= np.pi/2
+
+            x += r * np.cos(yaw)
+            y += r * np.sin(yaw)
+            return x, y
 

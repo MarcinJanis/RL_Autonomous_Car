@@ -370,7 +370,6 @@ class GazeboCarEnv(gymnasium.Env):
 
         self._teleport_car(x_st, y_st, yaw_st)
 
-
         # pętla synchronizacji
         # timeout_start = time.time()
         # max_wait_time = 5.0
@@ -598,28 +597,11 @@ class GazeboCarEnv(gymnasium.Env):
             result = subprocess.run(command, capture_output=True, text=True, check=True)
             if "data: true" in result.stdout:
                 self.node.get_logger().info(f"[Event] Teleport succes: x={x:.2f}, y={y:.2f}")
-                # self._send_cmd(0.0, 0.0)
             else:
                 self.node.get_logger().info(f"[Error] Teleport executed but return false: {result.stdout}")
 
         except subprocess.CalledProcessError as e:
             self.node.get_logger().error(f"[Error] Teleport failed: {e.stderr}")
-
-
-    # def _stop_gz(self):
-       
-    #     try:
-    #         os.system("gz service -s /world/mecanum_drive/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 3000 --req 'pause: true'")
-    #     except Exception as e:
-    #         self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
-
-    # def _start_gz(self):
-        
-    #     try:
-    #        os.system("gz service -s /world/mecanum_drive/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 3000 --req 'pause: false'")
-    #     except Exception as e:
-    #         self.node.get_logger().error(f"[Error] Gz pause failed: {e.stderr}")
-            
 
     def _get_quaternion_from_yaw(self, yaw):
         q = Quaternion()
