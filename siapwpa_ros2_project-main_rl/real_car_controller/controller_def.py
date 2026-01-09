@@ -11,15 +11,26 @@ import time
 
 from utils_real import wheelSpeedDistributor 
 
+import serial
+
+
+motors_config = {'serial_port':'/dev/ttyACM0', 
+                 'baud_rate':9600, 
+                 'CALIB_MOTOR_LB':1.0, 
+                 'CALIB_MOTOR_RB':1.0, 
+                 'CALIB_MOTOR_LF':1.0, 
+                 'CALIB_MOTOR_RF':1.0, 
+                 'max_wheel_speed':2}
+
+
 class MasterController(Node):
     
-    def __init__(self, car_config: dict, sensor_config: dict,  model_pth, display = True, dt = 0.1):
+    def __init__(self, car_config: dict, sensor_config: dict, motors_config: dict, model_pth,dt = 0.1):
         super().__init__('MasterControllerNode')
 
         self.dt = dt
         self.timer = self.create_timer(self.dt, self.control_loop)
 
-        self.display = display 
         self.WSD = wheelSpeedDistributor(car_config)
  
         # car config:
@@ -34,6 +45,16 @@ class MasterController(Node):
         self.lidar_angle_step = sensor_config['lidar_angle_step']
         self.lidar_display_range = sensor_config['lidar_display_range']
 
+        # communication config
+        self.serial_port = motors_config['serial_port']
+        self.baud_rate = motors_config['baud_rate']
+        self.CALIB_MOTOR_LB = motors_config['CALIB_MOTOR_LB']  # left back
+        self.CALIB_MOTOR_RB = motors_config['CALIB_MOTOR_RB']  # right back
+        self.CALIB_MOTOR_LF = motors_config['CALIB_MOTOR_LF']  # left front
+        self.CALIB_MOTOR_RF = motors_config['CALIB_MOTOR_RF']  # right front
+
+        self.max_wheel_speed = motors_config['max_wheel_speed'] 
+
         # camera config:
         self.img_shape = sensor_config['img_shape']
 
@@ -42,30 +63,36 @@ class MasterController(Node):
         except Exception as e:
             print(f'[Warning] Cannot load model from path: \n {e}')
 
-
         # --- inner state --- #
         self.camera_img = None
         self.lidar_scan = None
-
-        # --- visu state --- #
-        self.lidar_scan_visu = None
 
         # --- ROS subsribers --- 
         self.bridge = CvBridge()
 
         self.ros_camera_sub = self.create_subscription(
             Image,
-            "/world/mecanum_drive/model/vehicle_blue/link/camera_link/sensor/camera_sensor/image",
+            # "/world/mecanum_drive/model/vehicle_blue/link/camera_link/sensor/camera_sensor/image",
+            "/camera",
             self._camera_cb,
             10 
         )
 
         self.ros_lidar_sub = self.create_subscription(
             LaserScan,
-            "/scan",
+            "/lidar_scan",
             self._lidar_cb,
             10 
         )
+
+        # serial port init
+        try:
+            self.arduino =  serial.Serial(port=self.serial_port, baudrate=self.baud_rate, timeout=1)
+            time.sleep(2)
+            self.arduino.flush()
+            print(f"Connected to {self.serial_port}")
+        except Exception as e:
+            print(f"Cannot conect to {self.serial_port}: \n{e}")
 
         # --- ROS Callbacks --- 
     def _camera_cb(self, msg: Image):
@@ -79,30 +106,9 @@ class MasterController(Node):
 
     def _lidar_cb(self, msg: LaserScan):
         try:
-            scan = np.array(msg.ranges, dtype=np.float32)
-
-            # preprocess and normalize
-            scan_left_side = scan[-int(self.lidar_beams/2):]
-            scan_right_side = scan[:int(self.lidar_beams/2)]
-            scan = np.concatenate((scan_left_side, scan_right_side), axis=0)
-            scan = np.clip(scan, 0.0, self.lidar_max_range)
-            self.lidar_scan = scan / self.lidar_max_range
-
-            if self.display:
-                self.lidar_scan_visu = self.lidar_disp_transform(self.lidar_scan, 
-                                                                 self.lidar_min_range,
-                                                                 self.lidar_max_range, 
-                                                                 self.lidar_angle_min, 
-                                                                 self.lidar_angle_step,
-                                                                 bev_size=500, 
-                                                                 display_range=self.lidar_display_range, 
-                                                                 scale=None)
-                cv2.imshow("Lidar BEV", self.lidar_scan_visu)
-                cv2.waitKey(1)
-
+            self.lidar_scan = np.array(msg.ranges, dtype=np.float32)
         except Exception as e:
-            self.get_logger().warn(f"[Err] Cannot get data from lidaer:\n{e}")
-
+            self.get_logger().warn(f"[Err] Cannot get data from lidar:\n{e}")
 
     def act(self):
         if not self.camera_img is None and not self.lidar_scan is None:
@@ -114,6 +120,8 @@ class MasterController(Node):
             v = np.clip(v, -self.v_max_lin, self.v_max_lin)
             w = np.clip(w, -self.v_max_ang, self.v_max_ang)
             ws = self.WSD.allocate_wheelspeed(v, w) 
+            self.camera_img = None
+            self.lidar_scan = None
         else:
             print('Waiting for sensors data...')
             ws = np.zeros((4, 1), dtype = np.float32)
@@ -126,11 +134,114 @@ class MasterController(Node):
      
             return ws
         
-    def control_loop(self):
-        
-        w = self.act()
-        #TODO: wystawić sterowanie!?
+    def send_cmd(self, w, distance=0, complex_mode=250):
 
+        pwm = np.clip((np.abs(w) / self.max_wheel_speed * 255), 0, 255).astype(np.uint8)
+        dir = np.clip(np.sign(w), 0, 1).astype(np.uint8)
+        data_packet = [complex_mode, distance, pwm[0], pwm[1], pwm[3], pwm[2], dir[0], dir[1], dir[3], dir[2]]
+        self.arduino.write(bytes(data_packet))
+
+        # data packet:
+        # 1 Lewy Przód	
+        # 2 Prawy Przód	
+        # 3 Lewy Tył	
+        # 4 Prawy Ty
+
+        # allocate wheel speed
+        #  w[0] - left front 
+        #  w[1] - right front
+        #  w[2] - right back 
+        #  w[3] - left back
+
+    def control_loop(self):
+        w = self.act()
+        self.send_cmd(w)
+
+
+class LidarPreprocessNode(Node):
+    def __init__(self, sensor_config: dict, dt = 10):
+
+        super().__init__('LidarPreprocessNode')
+
+        self.dt = dt
+
+        self.lidar_beams = sensor_config['lidar_beams']
+        self.lidar_max_range = sensor_config['lidar_max_range']
+        self.lidar_min_range = sensor_config['lidar_min_range']
+        self.lidar_angle_min = sensor_config['lidar_angle_min']
+        self.lidar_angle_step = sensor_config['lidar_angle_step']
+        self.lidar_display_range = sensor_config['lidar_display_range']
+
+        self.ros_lidar_raw_sub = self.create_subscription(
+            LaserScan,
+            "/scan",
+            self._lidar_cb,
+            10 
+        )
+
+        self.ros_lidar_scan_pub = self.create_publisher(
+            LaserScan, 
+            '/lidar_scan', 
+            10
+        )
+
+    def _lidar_cb(self, msg: LaserScan):
+        try:
+            scan = np.array(msg.ranges, dtype=np.float32)
+
+            # preprocess and normalize
+            scan_left_side = scan[-int(self.lidar_beams/2):]
+            scan_right_side = scan[:int(self.lidar_beams/2)]
+            scan = np.concatenate((scan_left_side, scan_right_side), axis=0)
+            scan = np.clip(scan, 0.0, self.lidar_max_range)
+            self.lidar_scan = scan / self.lidar_max_range
+
+        except Exception as e:
+            self.get_logger().warn(f"[Err] Cannot get data from lidar:\n{e}")
+        
+        try:
+            # Scan to send
+            pub_msg_lidar_scan = LaserScan()
+            
+            pub_msg_lidar_scan.header = msg.header 
+            pub_msg_lidar_scan.header.stamp = self.get_clock().now().to_msg() 
+
+            pub_msg_lidar_scan.angle_min = self.lidar_angle_min
+            pub_msg_lidar_scan.angle_increment = self.lidar_angle_step
+            pub_msg_lidar_scan.range_min = self.lidar_min_range
+            pub_msg_lidar_scan.range_max = self.lidar_max_range
+
+            pub_msg_lidar_scan.ranges = self.lidar_scan.astype(np.float32).tolist()
+
+            self.ros_lidar_scan_pub.publish(pub_msg_lidar_scan)
+
+        except Exception as e:
+            self.get_logger().warn(f"[Err] Cannot send lidar data:\n{e}")
+        
+
+class LidarDisplayNode(Node):
+    def __init__(self, sensor_config: dict, dt = 10):
+
+        super().__init__('LidarDisplayNode')
+
+        self.bridge = CvBridge()
+
+        self.lidar_beams = sensor_config['lidar_beams']
+        self.lidar_max_range = sensor_config['lidar_max_range']
+        self.lidar_min_range = sensor_config['lidar_min_range']
+        self.lidar_angle_min = sensor_config['lidar_angle_min']
+        self.lidar_angle_step = sensor_config['lidar_angle_step']
+        self.lidar_display_range = sensor_config['lidar_display_range']
+
+        # --- visu --- #
+        self.lidar_scan_visu = None
+
+        self.ros_lidar_raw_sub = self.create_subscription(
+            LaserScan,
+            "/lidar_scan",
+            self._lidar_cb,
+            10 
+        )
 
     def lidar_disp_transform(self, scan, range_min, range_max, angle_min, angle_increment, bev_size=500, display_range=1.0, scale=None):
 
@@ -174,26 +285,22 @@ class MasterController(Node):
     def visu_quit(self):
         cv2.destroyAllWindows()
 
-# class CameraController(Node):
-#     '''
-#     > Get data from camera
-#     > Preprocessing 
-#     > Send via ROS
-#     '''
-#     def __init__(self):
-#         super().__init__('CameraControllerNode')
+    def _lidar_cb(self, msg: LaserScan):
 
-#     pass
+        lidar_bev_map = np.array(msg.ranges, dtype=np.float32)
 
+        try:
+            lidar_scan_visu = self.lidar_disp_transform(lidar_bev_map, 
+                                                        self.lidar_min_range,
+                                                        self.lidar_max_range, 
+                                                        self.lidar_angle_min, 
+                                                        self.lidar_angle_step,
+                                                        bev_size=500, 
+                                                        display_range=self.lidar_display_range, 
+                                                        scale=None)
 
-# Not necessery if provided node will work 
-# class LidarController(Node):
-#     '''
-#     > Get data from lidar
-#     > Preprocessing (cut off to leave 280 bins (120 angle))
-#     > Send via ROS
-#     '''
-#     def __init__(self):
-#         super().__init__('LidarControllerNode')
+            cv2.imshow("Lidar BEV", lidar_scan_visu)
+            cv2.waitKey(1)
 
-#     pass
+        except Exception as e:
+            self.get_logger().warn(f"[Err] Cannot display lidar data:\n{e}")
