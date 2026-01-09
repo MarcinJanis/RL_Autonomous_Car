@@ -157,6 +157,10 @@ class MasterController(Node):
         w = self.act()
         self.send_cmd(w)
 
+    def destroy_node(self):
+        self.send_cmd(np.zeros((4,1))) 
+        self.arduino.close()
+        super().destroy_node()
 
 class LidarPreprocessNode(Node):
     def __init__(self, sensor_config: dict, dt = 10):
