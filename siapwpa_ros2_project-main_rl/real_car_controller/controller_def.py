@@ -12,19 +12,7 @@ import time
 from utils_real import wheelSpeedDistributor 
 
 import serial
-
-
-motors_config = {'serial_port':'/dev/ttyACM0', 
-                 'baud_rate':9600, 
-                 'CALIB_MOTOR_LB':1.0, 
-                 'CALIB_MOTOR_RB':1.0, 
-                 'CALIB_MOTOR_LF':1.0, 
-                 'CALIB_MOTOR_RF':1.0, 
-                 'max_wheel_speed':2}
-
-
 class MasterController(Node):
-    
     def __init__(self, car_config: dict, sensor_config: dict, motors_config: dict, model_pth,dt = 0.1):
         super().__init__('MasterControllerNode')
 
@@ -94,15 +82,15 @@ class MasterController(Node):
         except Exception as e:
             print(f"Cannot conect to {self.serial_port}: \n{e}")
 
+
         # --- ROS Callbacks --- 
     def _camera_cb(self, msg: Image):
         try:
             img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-            #TODO: image preprocessing
+            img = cv2.resize(img, (256, 256), dst=None, fx=None, fy=None, interpolation=cv2.INTER_LINEAR)
             self.camera_img = img
         except Exception as e:
             self.get_logger().warn(f"[Err] Cannot get data from camera:\n{e}")
-
 
     def _lidar_cb(self, msg: LaserScan):
         try:
@@ -119,19 +107,12 @@ class MasterController(Node):
             w = w_norm * self.v_max_ang
             v = np.clip(v, -self.v_max_lin, self.v_max_lin)
             w = np.clip(w, -self.v_max_ang, self.v_max_ang)
-            ws = self.WSD.allocate_wheelspeed(v, w) 
+            ws = self.WSD.allocate_wheelspeed(v, w)
             self.camera_img = None
             self.lidar_scan = None
         else:
             print('Waiting for sensors data...')
             ws = np.zeros((4, 1), dtype = np.float32)
-
-        # wheel speeds: 
-        #  ws[0] - left front 
-        #  ws[1] - right front
-        #  ws[2] - right back 
-        #  ws[3] - left back
-     
             return ws
         
     def send_cmd(self, w, distance=0, complex_mode=250):
@@ -142,16 +123,10 @@ class MasterController(Node):
         self.arduino.write(bytes(data_packet))
 
         # data packet:
-        # 1 Lewy Przód	
-        # 2 Prawy Przód	
-        # 3 Lewy Tył	
-        # 4 Prawy Ty
-
-        # allocate wheel speed
-        #  w[0] - left front 
-        #  w[1] - right front
-        #  w[2] - right back 
-        #  w[3] - left back
+        # 1 left front -> w[0] - left front 
+        # 2 right front -> 	w[1] - right front
+        # 3 left back -> w[3] - left back
+        # 4 right back -> w[2] - right back 
 
     def control_loop(self):
         w = self.act()

@@ -21,12 +21,20 @@ sensor_config = {'lidar_beams': 280,
                 'img_shape':(255, 255, 3)
                 }
 
+motors_config = {'serial_port':'/dev/ttyACM0', 
+                 'baud_rate':9600, 
+                 'CALIB_MOTOR_LB':1.0, 
+                 'CALIB_MOTOR_RB':1.0, 
+                 'CALIB_MOTOR_LF':1.0, 
+                 'CALIB_MOTOR_RF':1.0, 
+                 'max_wheel_speed':2}
+
 def main():
     rclpy.init()
     
     model_path = "path/to/your/model.zip"
 
-    master_node = MasterController(car_config, sensor_config, model_pth=model_path)
+    master_node = MasterController(car_config, sensor_config, motors_config, model_pth=model_path)
     preprocess_node = LidarPreprocessNode(sensor_config)
     display_node = LidarDisplayNode(sensor_config)
 
