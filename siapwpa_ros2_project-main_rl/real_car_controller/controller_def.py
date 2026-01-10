@@ -86,8 +86,8 @@ class MasterController(Node):
         # --- ROS Callbacks --- 
     def _camera_cb(self, msg: Image):
         try:
-            img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-            img = cv2.resize(img, (256, 256), dst=None, fx=None, fy=None, interpolation=cv2.INTER_LINEAR)
+            # obraz z preprocess node jest JUŻ rgb8 i 256x256
+            img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
             self.camera_img = img
         except Exception as e:
             self.get_logger().warn(f"[Err] Cannot get data from camera:\n{e}")
