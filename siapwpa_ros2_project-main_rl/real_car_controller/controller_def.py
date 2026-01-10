@@ -108,8 +108,8 @@ class MasterController(Node):
             v = np.clip(v, -self.v_max_lin, self.v_max_lin)
             w = np.clip(w, -self.v_max_ang, self.v_max_ang)
             ws = self.WSD.allocate_wheelspeed(v, w)
-            self.camera_img = None
-            self.lidar_scan = None
+            # self.camera_img = None
+            # self.lidar_scan = None
         else:
             print('Waiting for sensors data...')
             ws = np.zeros((4, 1), dtype = np.float32)
