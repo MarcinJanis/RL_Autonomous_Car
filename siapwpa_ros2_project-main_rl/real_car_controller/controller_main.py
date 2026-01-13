@@ -1,8 +1,12 @@
 
 from controller_def import MasterController, LidarDisplayNode, LidarPreprocessNode
+from camera_preprocess_node import CameraPreprocessNode
+from realsense_camera_node import RealSenseCameraNode
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 import numpy as np
+import subprocess
+
 
 car_config = {
     'r': 0.05,  # przykładowe realne wartości
@@ -32,16 +36,27 @@ motors_config = {'serial_port':'/dev/ttyACM0',
 def main():
     rclpy.init()
     
+    # run launch for lidar
+    launch_process = subprocess.Popen(
+        ['ros2', 'launch', 'sllidar_ros2', 'sllidar_a2m8_launch.py'],
+        text=True
+    )
+    print(f"Lidar node process start with pid:{launch_process.pid}")
+
     model_path = "path/to/your/model.zip"
 
     master_node = MasterController(car_config, sensor_config, motors_config, model_pth=model_path)
     preprocess_node = LidarPreprocessNode(sensor_config)
     display_node = LidarDisplayNode(sensor_config)
+    camera_node_preprocess = CameraPreprocessNode()
+    camera_node_raw = RealSenseCameraNode()
 
     executor = MultiThreadedExecutor()
     executor.add_node(master_node)
     executor.add_node(preprocess_node)
     executor.add_node(display_node)
+    executor.add_node(camera_node_preprocess)
+    executor.add_node(camera_node_raw)
 
     try:
         print("Running nodes...")
@@ -55,6 +70,9 @@ def main():
         master_node.destroy_node()
         preprocess_node.destroy_node()
         display_node.destroy_node()
+        camera_node_raw.destroy_node()
+        camera_node_preprocess.destroy_node()
+
         rclpy.shutdown()
 
 if __name__ == '__main__':

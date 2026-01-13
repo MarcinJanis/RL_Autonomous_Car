@@ -60,7 +60,6 @@ class MasterController(Node):
 
         self.ros_camera_sub = self.create_subscription(
             Image,
-            # "/world/mecanum_drive/model/vehicle_blue/link/camera_link/sensor/camera_sensor/image",
             "/camera",
             self._camera_cb,
             10 
@@ -196,7 +195,9 @@ class LidarPreprocessNode(Node):
 
         except Exception as e:
             self.get_logger().warn(f"[Err] Cannot send lidar data:\n{e}")
-        
+   
+    def destroy_node(self):
+        super().destroy_node()
 
 class LidarDisplayNode(Node):
     def __init__(self, sensor_config: dict, dt = 10):
@@ -283,3 +284,6 @@ class LidarDisplayNode(Node):
 
         except Exception as e:
             self.get_logger().warn(f"[Err] Cannot display lidar data:\n{e}")
+
+    def destroy_node(self):
+        super().destroy_node()

@@ -33,6 +33,8 @@ class CameraPreprocessNode(Node):
         except Exception as e:
             self.get_logger().warn(f"Preprocess error: {e}")
 
+    def destroy_node(self):
+        super().destroy_node()
 
 def main():
     rclpy.init()
