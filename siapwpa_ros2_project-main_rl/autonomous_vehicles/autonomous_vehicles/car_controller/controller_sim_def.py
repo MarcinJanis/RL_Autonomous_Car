@@ -98,15 +98,19 @@ class CarController(Node):
         self.gt_manager = gt.traj_gt() 
         self.gt_manager.setup('/home/developer/ros2_ws/src/models/walls/waypoints_prawy_srodek.csv', n=300)
 
-        self.respawn_obstacles()
+        self.obstacle_coords = self.respawn_obstacles()
 
     def respawn_obstacles(self):
         obstacle_names = ["obstacle_1", "obstacle_2", "obstacle_3", "obstacle_4"]
         self.get_logger().info("Teleporting 4 obstacles to random positions...")
 
+        obstacle_coords = []
+
         for name in obstacle_names:
+
             x, y = self.gt_manager.new_rand_pt_obstacle()
-            
+            obstacle_coords.append((x, y))
+
             req_content = f'name: "{name}", position: {{x: {x}, y: {y}, z: 0.5}}'
             
             cmd = [
@@ -122,6 +126,9 @@ class CarController(Node):
                 self.get_logger().error(f"GZ Service Error for {name}: {result.stderr}")
             else:
                 self.get_logger().info(f"Response for {name}: {result.stdout}")
+
+        return obstacle_coords
+        
 
     def _camera_cb(self, msg: Image):
         try:
@@ -282,6 +289,9 @@ class CarController(Node):
         p1 = _to_pix(-4, 15)
         p2 = _to_pix(-9.8, 15)
         cv2.line(canvas, p1, p2, (255, 0, 0), 2) # BGR: Blue
+        # draw obstacles
+        for pt in self.obstacle_coords:
+            cv2.circle(canvas, _to_pix(pt[0], pt[1]), 20, (255, 255, 255), 3)
 
         # --- Draw trajectory --- 
         traj_pixels = [_to_pix(pt[0], pt[1]) for pt in self.trajectory]
