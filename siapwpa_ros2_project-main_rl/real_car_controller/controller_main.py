@@ -1,5 +1,6 @@
 
-from controller_def import MasterController, LidarDisplayNode, LidarPreprocessNode
+from master_node import MasterController
+from lidar_node import LidarDisplayNode, LidarPreprocessNode
 from camera_preprocess_node import CameraPreprocessNode
 from realsense_camera_node import RealSenseCameraNode
 import rclpy
