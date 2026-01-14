@@ -7,5 +7,5 @@ __pycache__/
 siapwpa_ros2_project-main_rl/log/latest
 wandb/
 runs/
-*.sh
 siapwpa_ros2_project-main_rl/autonomous_vehicles/models
+siapwpa_ros2_project-main_rl/autonomous_vehicles/training_logs
