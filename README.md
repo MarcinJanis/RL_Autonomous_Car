@@ -48,12 +48,10 @@ ___
 **Visualisation**
 
 **Maximizing speed**
-![Inference_GIF_max_speed](./images/)
-
+![Inference_GIF_max_speed](./images/inference_drift.gif)
 
 **Avoiding obstacles**
-
-///////ad here gifs - records of visualisation
+![Inference_GIF_max_speed](./images/inference_obstacles.gif)
 
 Note: Colour of line drawed by car is heatmap of speed gradient in order to better representation of working. 
 
