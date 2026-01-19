@@ -47,7 +47,11 @@ ___
 
 **Visualisation**
 
-///////ad here gifs - recoders from gazebo
+**Maximizing speed**
+![Inference_GIF_max_speed](./images/)
+
+
+**Avoiding obstacles**
 
 ///////ad here gifs - records of visualisation
 
