@@ -99,17 +99,25 @@ class CarController(Node):
         self.gt_manager.setup('/home/developer/ros2_ws/src/models/walls/waypoints_prawy_srodek.csv', n=300)
 
         self.obstacle_coords = self.respawn_obstacles()
+        self.obstacle_coords = self.respawn_obstacles([(27.70, 5.26), 
+                                                       (14.00, 16.45), 
+                                                       (4.40, 23.80), 
+                                                       (-5.92, 6.65)])
 
-    def respawn_obstacles(self):
+    def respawn_obstacles(self, fixed_points = None):
         obstacle_names = ["obstacle_1", "obstacle_2", "obstacle_3", "obstacle_4"]
         self.get_logger().info("Teleporting 4 obstacles to random positions...")
 
         obstacle_coords = []
 
-        for name in obstacle_names:
-
-            x, y = self.gt_manager.new_rand_pt_obstacle()
-            obstacle_coords.append((x, y))
+        for idx, name in enumerate(obstacle_names):
+            
+            if fixed_points is None:
+                x, y = self.gt_manager.new_rand_pt_obstacle()
+                obstacle_coords.append((x, y))
+            else:
+                x, y = fixed_points[idx]
+                obstacle_coords.append((x, y))
 
             req_content = f'name: "{name}", position: {{x: {x}, y: {y}, z: 0.5}}'
             

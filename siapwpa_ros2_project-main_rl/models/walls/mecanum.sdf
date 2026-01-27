@@ -20,9 +20,10 @@
       <ambient>0.4 0.4 0.4 1</ambient>
       <background>0.7 0.7 0.7 1</background>
       <shadows>true</shadows>
+      <grid>false</grid>
     </scene>
 
-    <!-- added obstacle model -->
+
     <model name='obstacle_1'>
       <pose>0 0 0.5 0 0 0</pose>
       <link name='link'>
@@ -122,7 +123,7 @@
       </link>
     </model>
 
-     <model name='obstacle_4'>
+    <model name='obstacle_4'>
       <static>true</static>
       <pose>0 0 0 0 0 0</pose>
       <link name='link'>
@@ -419,9 +420,16 @@
             </plane>
           </geometry>
           <material>
-            <ambient>0.8 0.8 0.8 1</ambient>
-            <diffuse>0.8 0.8 0.8 1</diffuse>
-            <specular>0.8 0.8 0.8 1</specular>
+            <!-- <ambient>0.8 0.8 0.8 1</ambient> -->
+            <!-- <diffuse>0.8 0.8 0.8 1</diffuse> -->
+            <!-- <specular>0.8 0.8 0.8 1</specular> -->
+            <diffuse>1.0 1.0 1.0 1.0</diffuse>
+            <specular>0.0 0.0 0.0 1.0</specular>
+            <pbr>
+              <metal>
+                <albedo_map>meshes/field.png</albedo_map>
+              </metal>
+            </pbr>
           </material>
         </visual>
         <pose>0 0 0 0 0 0</pose>
@@ -439,7 +447,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>0 0 0 0 0 0</pose>
+      <pose>0 0 -0.02 0 0 0</pose>
       <self_collide>false</self_collide>
     </model>
 

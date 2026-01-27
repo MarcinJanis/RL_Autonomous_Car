@@ -13,6 +13,7 @@ sys.path.append('/home/developer/ros2_ws/src/autonomous_vehicles/autonomous_vehi
 # V_ang_max = 2.0
 
 V_lin_max = 5.0
+# V_lin_max = 8.0
 V_ang_max = 1.5
 
 step_time = 0.1 # [s] Update frequency -> the same as in training

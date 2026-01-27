@@ -75,8 +75,8 @@ run = wandb.init(
     sync_tensorboard=True,
     monitor_gym=False,
     save_code=False,
-    mode='online'
-    # mode='offline'
+    # mode='online'
+    mode='offline'
 )
 
 # --- Init Environment ---
@@ -175,9 +175,27 @@ else:
     )
 
 # Final Architecture visualization
-print("--- Architecture: ---")
-print(model.policy)
-print('-'*10)
+# print("--- Architecture: ---")
+# print(model.policy)
+# print('-'*10)
+
+print("\n" + "="*50, flush=True)
+print("--- DETAILED ARCHITECTURE ---", flush=True)
+print(model.policy, flush=True)
+print("="*50, flush=True)
+
+def count_parameters(model):
+    total = sum(p.numel() for p in model.policy.parameters())
+    trainable = sum(p.numel() for p in model.policy.parameters() if p.requires_grad)
+    return total, trainable
+
+total_p, trainable_p = count_parameters(model)
+
+print(f"STATYSTYKI PARAMETRÓW:", flush=True)
+print(f" -> Wszystkie parametry: {total_p:,}", flush=True)
+print(f" -> Trenowalne parametry: {trainable_p:,}", flush=True)
+print(f" -> Zamrożone parametry: {total_p - trainable_p:,}", flush=True)
+print("="*50 + "\n", flush=True)
 
 # Trening
 print('-'*10)
