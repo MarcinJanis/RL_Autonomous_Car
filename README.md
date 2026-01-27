@@ -47,10 +47,14 @@ ___
 
 **Visualisation**
 
-///////ad here gifs - recoders from gazebo
-
-///////ad here gifs - records of visualisation
-
+**Maximizing speed**
+<br>
+![Inference_GIF_max_speed](./images/inference_max_speed.gif)
+<br><br><br>
+**Avoiding obstacles**
+<br>
+![Inference_GIF_max_speed](./images/inference_obstacles.gif)
+<br>
 Note: Colour of line drawed by car is heatmap of speed gradient in order to better representation of working. 
 
 
