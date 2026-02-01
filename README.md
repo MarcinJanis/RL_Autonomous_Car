@@ -42,6 +42,19 @@ Model was trained using **PPO** algorythm implemented in [**stable-baseline-3**]
 
 Model purpose was to **follow the road**, **maximizie speed** and **avoid collision**.
 
+
+## **Python dependencies**
+| Package | Version |
+| :--- | :--- |
+| **stable_baselines3** | 2.7.1 |
+| **gymnasium** | 1.2.2 |
+| **torch** | 2.9.1 |
+| **torchvision** | 0.24.1 |
+| **segmentation_models_pytorch** | 0.5.0 |
+| **numpy** | 1.24.4 |
+
+
+
 ___
 ## **Results**
 
@@ -104,8 +117,11 @@ The hardware-specific implementation, including ROS2 nodes sensor bridges and co
 
 ### How to deploy control system on hardware:
 
-To run, perform following commands
+To run, perform following command:
 
+```bash
+python3 real_car_controller/controller_main.py
+```
 
 
 ## **Directory Structure**
