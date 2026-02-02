@@ -59,10 +59,13 @@ ___
 **Visualisation**
 
 **Maximizing speed**
+___
 <br>
 ![Inference_GIF_max_speed](./images/inference_max_speed.gif)
 <br><br><br>
+
 **Avoiding obstacles**
+___
 <br>
 ![Inference_GIF_max_speed](./images/inference_obstacles.gif)
 <br>
