@@ -8,7 +8,7 @@ This project implements an end-to-end Reinforcement Learning (RL) pipeline for a
 - [x] Model training in simulation (Reinforcement Learning)
 - [x] Model inference in simulation
 - [ ] Hardware deployment & system adaptation
-  > **Current Status:** Codebase is complete. Currently undergoing hardware integration tests; facing some blockers regarding code compatibility with specific Jetson architecture.
+  > **Current Status:** Codebase is complete but not tested. Facing some blockers regarding code compatibility with specific Jetson architecture.
   
 ___
 ## System Architecture
@@ -99,8 +99,9 @@ ros2 launch autonomous_vehicles RL.auto.launch.py
 ```
 ___
 
-## **Hardware Deployment (Sim-to-Real)** [in development]
+## **Hardware Deployment (Sim-to-Real)** [Not tested due to compliance ]
 Next step is to adapt system to transition from simulation to a physical environment. 
+The module is architecturally prepared for deployment but is blocked due to compatibility with Jetson architecture. 
 
 ![Mecanum_car](./images/mecanum_car.jpg)
 
