@@ -132,20 +132,20 @@ python3 real_car_controller/controller_main.py
 
 
 ## **Directory Structure**
+<dl>
+`models/`: SDF and mesh files for the car and environment.
 
-* `models/`: SDF and mesh files for the car and environment.
+`autonomous_vehicles/autonomous_vehicles/` <br>
 
-* `autonomous_vehicles/autonomous_vehicles/` <br>
+<dd> `training/`: Custom wrapper compliant with [Gym](https://www.gymlibrary.dev/) implementation that communicates with Gazebo simulation, trening scripts.
 
-  * `training/`: Custom wrapper compliant with [Gym](https://www.gymlibrary.dev/) implementation that communicates with Gazebo simulation, trening scripts.
+<dd> `net_agent/`: PyTorch implementation of the neural network.
 
-  * `net_agent/`: PyTorch implementation of the neural network.
+<dd> `car_controller`: ROS2 nodes and scripts for inference in simulation.
 
-  * `car_controller`: ROS2 nodes and scripts for inference in simulation.
+`net_road_segmentation`: Files for pre-training encoder, used in neural network.
 
-* `net_road_segmentation`: Files for pre-training encoder, used in neural network.
+`real_car_controller/`: ROS2 nodes and scripts for hardware deployment.
 
-* `real_car_controller/`: ROS2 nodes and scripts for hardware deployment.
-
-* `sllidar_ros2/`: ROS2 nodes for Lidar data acqusition 
-
+`sllidar_ros2/`: ROS2 nodes for Lidar data acqusition 
+</dl>
