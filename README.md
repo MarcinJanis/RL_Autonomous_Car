@@ -4,7 +4,10 @@
 
 This project implements an end-to-end Reinforcement Learning (RL) pipeline for an autonomous car equipped with Mecanum wheels. The agent is trained in a simulated Gazebo environment to follow roads at high speeds while avoiding obstacles, using a fused sensor input (Lidar + RGB Camera). The system is designed with a "Sim-to-Real" approach, allowing deployment on physical hardware via NVIDIA Jetson Xavier.
 
-
+## **Project roadmap**
+[x] model training in simulation with RL. 
+[x] model inference in simulation. 
+[/] system adaptaiion for hawrdwaer deploytment. [In tests]
 ___
 ## **System architecture**
 
@@ -100,6 +103,8 @@ ___
 
 ## **Hardware Deployment (Sim-to-Real)**
 Next step is to adapt system to transition from simulation to a physical environment. 
+
+![Mecanum_car](./images/mecanum_car.jpg)
 
 ### **Hardware Specification**:
 Compute: [**NVIDIA Jetson Xavier NX 2**](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-xavier-nx/) 
