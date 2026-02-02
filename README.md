@@ -30,7 +30,7 @@ Model was implemented in PyTorch.
 - Visual Data: RGB frames for road following and lane detection.
 
 **Output:**
-- Continuous actions for longitudinal speed, and angular velocitya along vertical axis. 
+- Continuous actions for longitudinal speed, and angular velocity along vertical axis. 
 
 Model was trained using **PPO** algorythm implemented in [**stable-baseline-3**](https://stable-baselines3.readthedocs.io/en/master/). 
 
@@ -129,26 +129,6 @@ To run, perform following command:
 ```bash
 python3 real_car_controller/controller_main.py
 ```
-
-
-## **Directory Structure**
-
-`models/`: SDF and mesh files for the car and environment.
-
-`autonomous_vehicles/autonomous_vehicles/` <br>
-
-`training/`: Custom wrapper compliant with [Gym](https://www.gymlibrary.dev/) implementation that communicates with Gazebo simulation, trening scripts.
-
-`net_agent/`: PyTorch implementation of the neural network.
-
-`car_controller`: ROS2 nodes and scripts for inference in simulation.
-
-`net_road_segmentation`: Files for pre-training encoder, used in neural network.
-
-`real_car_controller/`: ROS2 nodes and scripts for hardware deployment.
-
-`sllidar_ros2/`: ROS2 nodes for Lidar data acqusition 
-
 
 ## **Directory Structure**
 ```text
