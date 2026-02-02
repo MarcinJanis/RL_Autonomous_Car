@@ -151,7 +151,7 @@ python3 real_car_controller/controller_main.py
 
 
 ## **Directory Structure**
-
+```text
 📂 autonomous_vehicles/
 ├── 📂 autonomous_vehicles/
     ├── 📂 training/               # Custom wrapper ([Gym](https://www.gymlibrary.dev/), [Gazebo](https://gazebosim.org/home)) & training scripts
@@ -161,3 +161,4 @@ python3 real_car_controller/controller_main.py
 ├── 📂 real_car_controller/        # ROS2 nodes for hardware deployment
 ├── 📂 sllidar_ros2/               # Lidar data acquisition and ROS2 nodes
 └── 📂 models/                     # SDF and mesh files for the car and environment.
+```
