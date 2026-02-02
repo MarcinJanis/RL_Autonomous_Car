@@ -149,3 +149,15 @@ python3 real_car_controller/controller_main.py
 
 `sllidar_ros2/`: ROS2 nodes for Lidar data acqusition 
 
+
+## **Directory Structure**
+
+📂 autonomous_vehicles/
+├── 📂 autonomous_vehicles/
+    ├── 📂 training/               # Custom wrapper ([Gym](https://www.gymlibrary.dev/), [Gazebo](https://gazebosim.org/home)) & training scripts
+    ├── 📂 net_agent/              # PyTorch neural network implementation
+    └── 📂 car_controller/         # ROS2 nodes for simulation inference
+├── 📂 net_road_segmentation/      # Encoder pre-training files
+├── 📂 real_car_controller/        # ROS2 nodes for hardware deployment
+├── 📂 sllidar_ros2/               # Lidar data acquisition and ROS2 nodes
+└── 📂 models/                     # SDF and mesh files for the car and environment.
