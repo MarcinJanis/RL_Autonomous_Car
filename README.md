@@ -5,9 +5,11 @@
 This project implements an end-to-end Reinforcement Learning (RL) pipeline for an autonomous car equipped with Mecanum wheels. The agent is trained in a simulated Gazebo environment to follow roads at high speeds while avoiding obstacles, using a fused sensor input (Lidar + RGB Camera). The system is designed with a "Sim-to-Real" approach, allowing deployment on physical hardware via NVIDIA Jetson Xavier.
 
 ## **Project roadmap**
-[x] model training in simulation with RL. 
-[x] model inference in simulation. 
-[/] system adaptaiion for hawrdwaer deploytment. [In tests]
+- [x] Model training in simulation (Reinforcement Learning)
+- [x] Model inference in simulation
+- [🔄] Hardware deployment & system adaptation
+  > **Current Status:** Codebase is complete. Currently undergoing hardware integration tests; facing some blockers regarding code compatibility with specific Jetson architecture.
+  
 ___
 ## **System architecture**
 
@@ -101,7 +103,7 @@ ros2 launch autonomous_vehicles RL.auto.launch.py
 ```
 ___
 
-## **Hardware Deployment (Sim-to-Real)**
+## **Hardware Deployment (Sim-to-Real)** [in developement]
 Next step is to adapt system to transition from simulation to a physical environment. 
 
 ![Mecanum_car](./images/mecanum_car.jpg)
@@ -131,15 +133,15 @@ python3 real_car_controller/controller_main.py
 
 ## **Directory Structure**
 
-`models/`: SDF and mesh files for the car and environment.
+* `models/`: SDF and mesh files for the car and environment.
 
-`autonomous_vehicles/autonomous_vehicles/` <br>
+* `autonomous_vehicles/autonomous_vehicles/` <br>
 
-      `training/`: Custom wrapper compliant with [Gym](https://www.gymlibrary.dev/) implementation that communicates with Gazebo simulation, trening scripts.
+      * `training/`: Custom wrapper compliant with [Gym](https://www.gymlibrary.dev/) implementation that communicates with Gazebo simulation, trening scripts.
 
-      `net_agent/`: PyTorch implementation of the neural network.
+      * `net_agent/`: PyTorch implementation of the neural network.
 
-      `car_controller`: ROS2 nodes and scripts for inference in simulation.
+      * `car_controller`: ROS2 nodes and scripts for inference in simulation.
 
 `net_road_segmentation`: Files for pre-training encoder, used in neural network.
 
