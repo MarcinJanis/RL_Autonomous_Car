@@ -25,7 +25,7 @@ Model was implemented in PyTorch.
 - Visual Data: RGB frames for road following and lane detection.
 
 **Output:**
-- Continuous actions for longitudinal, lateral, and angular velocity.
+- Continuous actions for longitudinal speed, and angular velocitya along vertical axis. 
 
 Model was trained using **PPO** algorythm implemented in [**stable-baseline-3**](https://stable-baselines3.readthedocs.io/en/master/)
 
