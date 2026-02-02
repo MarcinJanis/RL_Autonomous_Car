@@ -99,7 +99,7 @@ ros2 launch autonomous_vehicles RL.auto.launch.py
 ___
 
 ## **Hardware Deployment (Sim-to-Real)**
-The system has been fully adapted to transition from simulation to a physical environment. The trained RL policy is deployed on a Mecanum car capable of omnidirectional movement.
+Next step is to adapt system to transition from simulation to a physical environment. 
 
 ### **Hardware Specification**:
 Compute: [**NVIDIA Jetson Xavier NX 2**](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-xavier-nx/) 
@@ -108,10 +108,12 @@ Sensors:
 - **2D lidar** [Slamtec A2M8](https://bucket-download.slamtec.com/20b2e974dd7c381e46c78db374772e31ea74370d/LD208_SLAMTEC_rplidar_datasheet_A2M8_v2.6_en.pdf)
 - **RGB Camera** [Realsens D435i](https://www.realsenseai.com/products/depth-camera-d435i/)
 
-Middleware: [**ROS2 Foxy**](https://docs.ros.org/en/foxy/index.html).
+ROS environment: [**ROS2 Foxy**](https://docs.ros.org/en/foxy/index.html).
 
 Software Integration
-The hardware-specific implementation, including ROS2 nodes sensor bridges and communication with motor controllers, is located in: RL_Autonomous_Car/siapwpa_ros2_project-main_rl/real_car_controller
+The hardware-specific implementation, including ROS2 nodes sensor bridges and communication with motor controllers, is located in: 
+
+`RL_Autonomous_Car/siapwpa_ros2_project-main_rl/real_car_controller`
 
 ### How to deploy control system on hardware:
 
@@ -128,24 +130,13 @@ python3 real_car_controller/controller_main.py
 
 `autonomous_vehicles/autonomous_vehicles/` <br>
 
-`training/`: Custom OpenAI Gym/Gymnasium wrapper for the Gazebo environment and training script.
+`training/`: Custom wrapper compliant with [Gym](https://www.gymlibrary.dev/) implementation that communicates with Gazebo simulation, trening scripts.
 
-`net_agent/`: PyTorch implementation of the neural network.\
+`net_agent/`: PyTorch implementation of the neural network.
 
-`car_controller`: ROS2 nodes and scripts for inference
+`car_controller`: ROS2 nodes and scripts for inference in simulation.
 
-`net_road_segmentation`: Files for pre-training encoder, used in neural network
+`net_road_segmentation`: Files for pre-training encoder, used in neural network.
 
-`real_car_controller/`: ROS2 nodes for hardware deployment.
+`real_car_controller/`: ROS2 nodes and scripts for hardware deployment.
 
-<!-- 
-RL_Autonomous_Car/
-├── models/                       # SDF/Mesh files for the Mecanum car and Gazebo worlds
-├── net_road_segmentation/        # Scripts for pre-training the visual encoder (CNN)
-└── siapwpa_ros2_project-main_rl/ # Main ROS2 Workspace
-    └── autonomous_vehicles/
-        └── autonomous_vehicles/
-            ├── net_agent/        # PyTorch PPO architecture (net_v1.py)
-            ├── training/         # Gym/Gazebo environment & training scripts (SB3)
-            ├── car_controller/   # Inference nodes and logic for simulation
-            └── real_car_controller/ # ROS2 hardware drivers & Sim-to-Real bridge -->
