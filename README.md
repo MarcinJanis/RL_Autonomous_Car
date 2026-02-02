@@ -11,9 +11,12 @@ This project implements an end-to-end Reinforcement Learning (RL) pipeline for a
   > **Current Status:** Codebase is complete. Currently undergoing hardware integration tests; facing some blockers regarding code compatibility with specific Jetson architecture.
   
 ___
+## System Architecture
+
 **Neural Network Model**
 
-The core logic resides in: <br>`RL_Autonomous_Car\siapwpa_ros2_project-main_rl\autonomous_vehicles\autonomous_vehicles\net_agent\net_v1.py`. 
+The core logic resides in: <br>
+`RL_Autonomous_Car\siapwpa_ros2_project-main_rl\autonomous_vehicles\autonomous_vehicles\net_agent\net_v1.py`. 
 
 Model was implemented in PyTorch.
 
