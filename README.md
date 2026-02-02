@@ -11,14 +11,6 @@ This project implements an end-to-end Reinforcement Learning (RL) pipeline for a
   > **Current Status:** Codebase is complete. Currently undergoing hardware integration tests; facing some blockers regarding code compatibility with specific Jetson architecture.
   
 ___
-## **System architecture**
-
-Car is configure to operate based on sensors:
-- **2D lidar** [Slamtec A2M8](https://bucket-download.slamtec.com/20b2e974dd7c381e46c78db374772e31ea74370d/LD208_SLAMTEC_rplidar_datasheet_A2M8_v2.6_en.pdf)
-
-- **RGB Camera** [Realsens D435i](https://www.realsenseai.com/products/depth-camera-d435i/)
-
-___
 **Neural Network Model**
 
 The core logic resides in: <br>`RL_Autonomous_Car\siapwpa_ros2_project-main_rl\autonomous_vehicles\autonomous_vehicles\net_agent\net_v1.py`. 
