@@ -7,7 +7,7 @@ This project implements an end-to-end Reinforcement Learning (RL) pipeline for a
 ## **Project roadmap**
 - [x] Model training in simulation (Reinforcement Learning)
 - [x] Model inference in simulation
-- [🔄] Hardware deployment & system adaptation
+- 🔄 Hardware deployment & system adaptation
   > **Current Status:** Codebase is complete. Currently undergoing hardware integration tests; facing some blockers regarding code compatibility with specific Jetson architecture.
   
 ___
