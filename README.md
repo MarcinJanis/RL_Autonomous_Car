@@ -27,14 +27,12 @@ Model was implemented in PyTorch.
 **Output:**
 - Continuous actions for longitudinal speed, and angular velocitya along vertical axis. 
 
-Model was trained using **PPO** algorythm implemented in [**stable-baseline-3**](https://stable-baselines3.readthedocs.io/en/master/)
-
-
+Model was trained using **PPO** algorythm implemented in [**stable-baseline-3**](https://stable-baselines3.readthedocs.io/en/master/). 
 
 - Car with mecanum wheels, sensors and simulation envirnment is configure in: <br>
 `RL_Autonomous_Car\siapwpa_ros2_project-main_rl\models\walls\mecanum.sdf`
 
-- Environment to reinforcement learing: <br>
+- Environment to reinforcement learing is implemented in: <br>
 `RL_Autonomous_Car\siapwpa_ros2_project-main_rl\autonomous_vehicles\autonomous_vehicles\training\gazebo_car_env.py`
 
 - Training script with traning details: <br>
