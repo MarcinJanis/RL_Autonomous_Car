@@ -4,6 +4,23 @@
 
 This project implements an end-to-end Reinforcement Learning (RL) pipeline for an autonomous car equipped with Mecanum wheels. The agent is trained in a simulated Gazebo environment to follow roads at high speeds while avoiding obstacles, using a fused sensor input (Lidar + RGB Camera). The system is designed with a "Sim-to-Real" approach, allowing deployment on physical hardware via NVIDIA Jetson Xavier.
 
+___
+## **Results**
+
+**Visualisation**
+
+**Maximizing speed**
+<br><br>
+![Inference_GIF_max_speed](./images/inference_max_speed.gif)
+<br><br><br>
+
+**Avoiding obstacles**
+<br><br>
+![Inference_GIF_max_speed](./images/inference_obstacles.gif)
+<br>
+Note: Colour of line drawed by car is heatmap of speed gradient in order to better representation of working. 
+
+
 ## **Project roadmap**
 - [x] Model training in simulation (Reinforcement Learning)
 - [x] Model inference in simulation
@@ -50,24 +67,6 @@ Model purpose was to **follow the road**, **maximizie speed** and **avoid collis
 | **torchvision** | 0.24.1 |
 | **segmentation_models_pytorch** | 0.5.0 |
 | **numpy** | 1.24.4 |
-
-
-
-___
-## **Results**
-
-**Visualisation**
-
-**Maximizing speed**
-<br><br>
-![Inference_GIF_max_speed](./images/inference_max_speed.gif)
-<br><br><br>
-
-**Avoiding obstacles**
-<br><br>
-![Inference_GIF_max_speed](./images/inference_obstacles.gif)
-<br>
-Note: Colour of line drawed by car is heatmap of speed gradient in order to better representation of working. 
 
 
 ### How to run inference:
